@@ -3,9 +3,10 @@ typedef struct {
     struct sockaddr_in * addr;
 } http_client_t;
 
+//request_type = 1:GET, 2:POST
 typedef struct {
-    int is_get;
-    char * string_get;
+    int request_type;
+    char * request_string;
 } http_request_t;
 
 int server();

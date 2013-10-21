@@ -152,17 +152,17 @@ int sendFile(int sockfd, unsigned char *file_name)
 
 }
 
-int recvLine(int sockfd, unsigned char *buffer) 
+int recvLine(int sockfd, unsigned char *buffer, int max_size) 
 {
     unsigned char *ptr = buffer;
-    while(recv(sockfd, ptr, 1, 0) == 1){
+    while(recv(sockfd, ptr, 1, 0) == 1 && (ptr - buffer) <= (max_size / 2) ){
         if(*ptr == '\n'){ 
-            *(ptr) = '\0';
-            return strlen(buffer);
-        } 
+            break;
+        }
         ptr++;
     }
-    return 0;
+    *(ptr) = '\0';
+    return strlen(buffer);
 
 }
 

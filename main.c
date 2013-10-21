@@ -52,9 +52,10 @@ void cleanUpClient(http_client_t * client)
     free(client);
 }
 
-void logError(int level)
+void logError(int level, http_client_t * client)
 {
     printf("Error level %d occured\n", level);
+    cleanUpClient(client);
     pthread_exit(0);
 }
 
@@ -66,27 +67,33 @@ void *handleClient(void *client_void)
     char buffer[4000];
 
     if( ( http_request = (http_request_t *)malloc(sizeof(http_request_t)) ) == NULL)
-        logError(3);
+        logError(3, client);
 
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 
-    while(recvLine(client->sockfd, buffer))
+    int first = 0;
+
+    while(recvLine(client->sockfd, buffer, 4000))
     {
+        if(first == 0) {
+            if(strncasecmp(buffer, "GET", 3) == 0) {
+                http_request->request_type = 1;
+                http_request->request_string = strdup(buffer+4);            
+            } else if(strncasecmp(buffer, "POST", 4) == 0) {
+                http_request->request_type = 2;
+
+            } 
+            first++;
+        }
          printf("received: %s\n", buffer);
-         if(strncasecmp(buffer, "GET", 3) == 0) {
-            http_request->is_get = 1;
-            http_request->string_get = strdup(buffer);            
-         }
 
          if(buffer[0] == '\xd')
             break;
     }    
 
-    printf("received: %s\n", buffer);
-
-    if(http_request->is_get == 1)
+    if(http_request->request_type == 1)
     {        
-        if(strncasecmp(http_request->string_get, "GET / ", 6) == 0) {
+        if(strncasecmp(http_request->request_string, "/ ", 2) == 0) {
             sendString(client->sockfd, "HTTP/1.1 200 OK\r\n");
             sendString(client->sockfd, "Content-Type: text/html; charset=UTF-8\r\n");
             sendString(client->sockfd, "\r\n");
