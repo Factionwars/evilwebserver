@@ -3,6 +3,8 @@
 #include "server.h"
 #include "chrontions.c"
 
+#define SERVER_NAME "EvilTinyHTTPD"
+
 long long open_connections = 0;
 long long requests = 0;
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -45,17 +47,34 @@ http_client_t * initClientContainer()
     return client_container;
 }
 
-void cleanUpClient(http_client_t * client)
+void cleanUpClient(http_client_t * client, http_request_t * http_request)
 {
-    close(client->sockfd);
-    free(client->addr);
-    free(client);
+    if(client->sockfd != 0) {
+        close(client->sockfd);
+        client->sockfd = 0;
+    }
+    if(client->addr != NULL){
+        free(client->addr);
+        client->addr = NULL;
+    }
+    if(client != NULL){
+        free(client);
+        client = NULL;
+    }
+    if(http_request->request_string != NULL){
+        free(http_request->request_string);
+        http_request->request_string = NULL;
+    }
+    if(http_request->request_string != NULL) {
+        free(http_request);
+        http_request = NULL;
+    }
 }
 
-void logError(int level, http_client_t * client)
+void logError(int level, http_client_t * client, http_request_t * http_request)
 {
     printf("Error level %d occured\n", level);
-    cleanUpClient(client);
+    cleanUpClient(client, http_request);
     pthread_exit(0);
 }
 
@@ -67,7 +86,9 @@ void *handleClient(void *client_void)
     char buffer[4000];
 
     if( ( http_request = (http_request_t *)malloc(sizeof(http_request_t)) ) == NULL)
-        logError(3, client);
+        logError(3, client, http_request);
+    http_request->request_string = NULL;
+    http_request->request_type = 0;
 
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 
@@ -81,7 +102,7 @@ void *handleClient(void *client_void)
                 http_request->request_string = strdup(buffer+4);            
             } else if(strncasecmp(buffer, "POST", 4) == 0) {
                 http_request->request_type = 2;
-
+                http_request->request_string = strdup(buffer+5); 
             } 
             first++;
         }
@@ -91,26 +112,49 @@ void *handleClient(void *client_void)
             break;
     }    
 
-    if(http_request->request_type == 1)
+    char buf[2000];
+    time_t now = time(0);
+    struct tm tm = *gmtime(&now);
+    strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
+
+    if(http_request->request_string != NULL){
+        unsigned int i;
+        for(i = 0; i < strlen(http_request->request_string); i++){
+            if(http_request->request_string[i] == ' '){
+                if(strncasecmp(http_request->request_string + i + 1, "HTTP", 4) == 0){
+                    strncpy(client->http_version, http_request->request_string + i + 6, 3); 
+                    client->http_version[3] = '\0';
+                }                      
+                http_request->request_string[i] = '\0';
+            }
+        }
+    }
+
+    if(http_request->request_type == 1 || http_request->request_type == 2)
     {        
-        if(strncasecmp(http_request->request_string, "/ ", 2) == 0) {
+        if(http_request->request_string != NULL && strncasecmp(http_request->request_string, "/", 1) == 0) {
             sendString(client->sockfd, "HTTP/1.1 200 OK\r\n");
-            sendString(client->sockfd, "Content-Type: text/html; charset=UTF-8\r\n");
-            sendString(client->sockfd, "\r\n");
-            sendFile(client->sockfd, "html/index.html");
+            sendHeader(client->sockfd, "Server", SERVER_NAME);
+            sendHeader(client->sockfd, "Date", buf);
+
+            //sendFile(client->sockfd, "html/index.html");
+            sendPHP(client->sockfd);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
-            sendString(client->sockfd, "\r\n");
+            sendHeader(client->sockfd, "Server", SERVER_NAME);
+            sendHeader(client->sockfd, "Date", buf);
+
             sendFile(client->sockfd, "html/404.html");
         }
     } else {
         sendString(client->sockfd, "HTTP/1.1 502\r\n");
+        sendHeader(client->sockfd, "Server", SERVER_NAME);
+        sendHeader(client->sockfd, "Date", buf);
     }
 
     printf("Closing connection to %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 
-    free(http_request);
-    cleanUpClient(client);
+    cleanUpClient(client, http_request);
 
 
     pthread_mutex_lock(&count_mutex);

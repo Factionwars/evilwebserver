@@ -123,14 +123,33 @@ int sendString(int sockfd, unsigned char *buffer)
     return 1;
 }
 
+int sendHeader(int sockfd, unsigned char *message, unsigned char *value)
+{
+    int header_length = strlen(message) + strlen(value);
+    char * header = (char*)malloc(header_length);
+    sprintf(header,"%s: %s\r\n", message, value);
+    sendString(sockfd, header);
+}
+
 int sendFile(int sockfd, unsigned char *file_name)
 {
+
     int file, length;
     unsigned char * ptr;
     unsigned char * bPtr;
     if((file = open(file_name, O_RDONLY, 0)) == -1)
         return -1;
     length = get_file_size(file);
+
+    int header_length = strlen("Content-Length: ") + 5;
+    char length_header[header_length];
+    snprintf(length_header, header_length ,"Content-Length: %d\r\n", length);
+    sendString(sockfd, length_header);
+
+    sendString(sockfd, "Content-Type: text/html; charset=UTF-8\r\n");
+
+    sendString(sockfd, "\r\n");
+
     if((ptr = (unsigned char *)malloc(length)) == NULL)
         return -1;
     bPtr = ptr;
@@ -150,6 +169,20 @@ int sendFile(int sockfd, unsigned char *file_name)
     free(bPtr);
     return send_bytes;
 
+}
+
+int sendPHP(int sockfd) 
+{
+    FILE *child = popen("php-cgi html/test.php", "r");
+    // error checking omitted.
+
+    char buffer[1024];
+
+    while (fgets(buffer, sizeof(buffer) - 1, child)) {
+        buffer[1024] = '\0';
+        sendString(sockfd, buffer);
+    }
+       
 }
 
 int recvLine(int sockfd, unsigned char *buffer, int max_size) 

@@ -1,6 +1,9 @@
+#include <time.h>
+
 typedef struct { 
     int sockfd;
     struct sockaddr_in * addr;
+    char http_version[4];
 } http_client_t;
 
 //request_type = 1:GET, 2:POST
