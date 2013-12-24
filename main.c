@@ -25,10 +25,14 @@ int server()
 
     client_container = initClientContainer();
 
-    while(client_container->sockfd = acceptClient(sock_server, client_container->addr)) {
+    while(client_container->sockfd 
+            = acceptClient(sock_server, client_container->addr)) {
 
         pthread_t client_thread;
-        pthread_create( &client_thread, NULL, &handleClient, (void *)client_container);
+        pthread_create( &client_thread,
+                NULL,
+                &handleClient,
+                (void *)client_container);
         pthread_detach( client_thread );
 
         client_container = initClientContainer();
@@ -132,13 +136,13 @@ void *handleClient(void *client_void)
 
     if(http_request->request_type == 1 || http_request->request_type == 2)
     {        
-        if(http_request->request_string != NULL && strncasecmp(http_request->request_string, "/", 1) == 0) {
+        if(http_request->request_string != NULL) {
             sendString(client->sockfd, "HTTP/1.1 200 OK\r\n");
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);
 
             //sendFile(client->sockfd, "html/index.html");
-            sendPHP(client->sockfd);
+            sendPHP(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
             sendHeader(client->sockfd, "Server", SERVER_NAME);

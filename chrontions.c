@@ -8,10 +8,13 @@
 
 #include <netdb.h>
 
+#include "server.h"
+
 #define EOL "\n"
 #define EOL_LENGTH 1
 #define BACKLOG 3
 #define initPre "chron:"
+#define PHP_COMMAND "php-cgi html/test.php"
 
 int connectTo(struct in_addr *host, int port)
 {
@@ -171,18 +174,23 @@ int sendFile(int sockfd, unsigned char *file_name)
 
 }
 
-int sendPHP(int sockfd) 
+int sendPHP(int sockfd, http_request_t* http_request) 
 {
-    FILE *child = popen("php-cgi html/test.php", "r");
+    char * command;
+    command = (char *)malloc(strlen(PHP_COMMAND) + strlen(http_request->request_string) + 1);
+    strcpy(command, PHP_COMMAND);
+    strcpy(command + strlen(PHP_COMMAND), http_request->request_string);
+
+    command[strlen(command) - 1] = '\0';
+    
+    FILE *child = popen(command, "r");
     // error checking omitted.
+    char * buffer = (char *)malloc(1024);
 
-    char buffer[1024];
-
-    while (fgets(buffer, sizeof(buffer) - 1, child)) {
+    while (fgets(buffer, 1024 - 1, child)) {
         buffer[1024] = '\0';
         sendString(sockfd, buffer);
     }
-       
 }
 
 int recvLine(int sockfd, unsigned char *buffer, int max_size) 

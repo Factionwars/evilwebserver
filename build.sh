@@ -1,1 +1,1 @@
-gcc -pthread main.c
+gcc -pthread main.c -ggdb
