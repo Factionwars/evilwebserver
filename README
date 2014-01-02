@@ -6,7 +6,7 @@ Co-programmers: RedbullAddicted, Teddy, {Members of Evilzone}
 
 Phase: Pre-Alpha
 
-IDEAS/TODO:
+### IDEAS/TODO:
     1. Write this into a Ajax based front end engine <-- fucking rights on that idea
         This means that there is a full working ajax engine build on a low level to support l33t and fast requests
     
@@ -15,7 +15,7 @@ IDEAS/TODO:
     3. Add modules such as authentication
 
 
-LICENSE DETAILS:
+### LICENSE DETAILS:
 Factionwars@evilzone.org A HTTP webserver including a library and it's modules
 Copyright (C) 2014 Factionwars
 
