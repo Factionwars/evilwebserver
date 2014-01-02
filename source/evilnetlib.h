@@ -1,16 +1,6 @@
 #ifndef EVILNETLIB_HEADER
 #define EVILNETLIB_HEADER
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-
-#include <netdb.h>
-
 #define EOL "\n"
 #define EOL_LENGTH 1
 #define BACKLOG 100
@@ -42,7 +32,4 @@ int recvLine(int sockfd, unsigned char *buffer, int max_size);
 int get_file_size(int fd);
 
 struct in_addr* lookUpHost(char * host);
-
-#include "evilnetlib.c"
-
 #endif

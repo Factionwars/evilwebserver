@@ -4,12 +4,24 @@
  *  @author Factionwars@evilzone.org
  *  @co-authors You and you
  */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <time.h>
+#include <pthread.h>
+
 #include "evilnetlib.h"
 #include "webserver.h"
 
 
 #define SERVER_NAME "EvilTinyHTTPD"
-#define SERVER_PORT "1337"
+#define SERVER_PORT 1337
 
 long long requests = 0;
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
