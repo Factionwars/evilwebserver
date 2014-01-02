@@ -1,3 +1,9 @@
+/** 
+ *  @file   chrontions.c
+ *  @brief  Networking library with a focus on HTTP
+ *  @author Factionwars@evilzone.org
+ *  @co-authors You and you
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +22,13 @@
 #define initPre "chron:"
 #define PHP_COMMAND "php-cgi html/test.php "
 
+
+/**
+ * @brief This function connects to a in_addr struck and port
+ * @param *host Location struct
+ * @param port Location Port
+ * @return Sockfd or negative on error
+ */
 int connectTo(struct in_addr *host, int port)
 {
     int sockfd;
@@ -36,6 +49,11 @@ int connectTo(struct in_addr *host, int port)
     return sockfd;
 }
 
+/**
+ * @brief Create a socket and listen on it.
+ * @param port Local Port
+ * @return Sockfd or negative on error
+ */
 int listenOn(int port)
 {
     int sockfd;
@@ -69,6 +87,12 @@ int listenOn(int port)
 
 }
 
+/**
+ * @brief Accept client and return client socket
+ * @param sockfd server socket
+ * @param client_addr empty sockaddr_in* to be filled
+ * @return new Sockfd or negative on error
+ */
 int acceptClient(int sockfd, struct sockaddr_in* client_addr)
 {
     int new_sockfd;
@@ -79,6 +103,12 @@ int acceptClient(int sockfd, struct sockaddr_in* client_addr)
     return new_sockfd;
 }
 
+/**
+ * @brief Send a string to a socket
+ * @param sockfd remote socket to send to
+ * @param buffer string to send
+ * @return 1 on success negative on failure
+ */
 int sendString(int sockfd, unsigned char *buffer) 
 {
     //Pretty default function for sending a buffer to socket
@@ -94,6 +124,13 @@ int sendString(int sockfd, unsigned char *buffer)
     return 1;
 }
 
+/**
+ * @brief Send a HTTP header
+ * @param sockfd remote socket to send to
+ * @param message For example "Date"
+ * @param value For example "Thu, 21 Dec 2012 14:06:53 GMT"
+ * @return 0 or negative on failure
+ */
 int sendHeader(int sockfd, unsigned char *message, unsigned char *value)
 {
     int header_length = strlen(message) + strlen(value);
@@ -101,10 +138,20 @@ int sendHeader(int sockfd, unsigned char *message, unsigned char *value)
     //Render header
     sprintf(header,"%s: %s\r\n", message, value);
     //Send and free the header ptr
-    sendString(sockfd, header);
+    if(sendString(sockfd, header) < 0)
+        int ret = -1;
+    else 
+        int ret = 0;
     free(header);
+    return ret;
 }
 
+/**
+ * @brief Send a file
+ * @param sockfd remote socket to send to
+ * @param *file_name Name of the file to send
+ * @return send bytes or negative on failure
+ */
 int sendFile(int sockfd, unsigned char *file_name)
 {
 
@@ -151,6 +198,12 @@ int sendFile(int sockfd, unsigned char *file_name)
 
 }
 
+/**
+ * @brief Open PHP-CGI session and sends it to the socket
+ * @param sockfd remote socket to send to
+ * @param http_request http_request object
+ * @return 0 or negative on failure
+ */
 int sendPHP(int sockfd, http_request_t* http_request) 
 {
     //Render the PHP command 
@@ -165,17 +218,28 @@ int sendPHP(int sockfd, http_request_t* http_request)
 
     // error checking omitted.
     char * buffer = (char *)malloc(1024);
-
+    int ret = 0;
     //Read the PHP-CGI output from the FILE pipe and send it to the client
     while (fgets(buffer, 1024 - 1, child)) {
         buffer[1024] = '\0';
-        sendString(sockfd, buffer);
+        if(sendString(sockfd, buffer) < 0){
+            ret = -1;
+            break;
+        }
     }
     //Cleanup 
     free(command);
     free(buffer);
+    return ret;
 }
 
+/**
+ * @brief Receive a line untill EOL(end of line) character
+ * @param sockfd remote socket to receive from
+ * @param buffer buffer to store message in
+ * @param max_size max line size, do not exceed buffer size
+ * @return line length or negative on failure
+ */
 int recvLine(int sockfd, unsigned char *buffer, int max_size) 
 {
     unsigned char *ptr = buffer;
@@ -190,6 +254,11 @@ int recvLine(int sockfd, unsigned char *buffer, int max_size)
 
 }
 
+/**
+ * @brief Lookup host by hostname and return in_addr struct
+ * @param *host hostname
+ * @return struct in_addr* or NULL on failure
+ */
 struct in_addr* lookUpHost(char * host)
 {
     struct hostent *host_info;
@@ -204,6 +273,11 @@ struct in_addr* lookUpHost(char * host)
     return address;
 }
 
+/**
+ * @brief Get the size of a file
+ * @param fd File socket
+ * @return Filesize or negative on failure
+ */
 int get_file_size(int fd) {
     struct stat stat_struct;
     if(fstat(fd, &stat_struct) == -1)
