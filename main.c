@@ -4,11 +4,9 @@
  *  @author Factionwars@evilzone.org
  *  @co-authors You and you
  */
-
-#include <stdio.h>
-#include <pthread.h>
+#include "evilnetlib.h"
 #include "server.h"
-#include "evilnetlib.c"
+
 
 #define SERVER_NAME "EvilTinyHTTPD"
 

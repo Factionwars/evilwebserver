@@ -4,23 +4,7 @@
  *  @author Factionwars@evilzone.org
  *  @co-authors You and you
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-
-#include <netdb.h>
-
-#include "server.h"
-
-#define EOL "\n"
-#define EOL_LENGTH 1
-#define BACKLOG 100
-#define PHP_COMMAND "php-cgi html/test.php "
-
+#include "evilnetlib.h"
 
 /**
  * @brief This function connects to a in_addr struck and port
