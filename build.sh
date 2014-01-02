@@ -1,1 +1,1 @@
-gcc -pthread main.c -ggdb
+gcc -pthread main.c -o evilwebserver -ggdb

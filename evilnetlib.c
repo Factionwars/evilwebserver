@@ -1,5 +1,5 @@
 /** 
- *  @file   chrontions.c
+ *  @file   evilnetlib.c
  *  @brief  Networking library with a focus on HTTP
  *  @author Factionwars@evilzone.org
  *  @co-authors You and you
@@ -19,7 +19,6 @@
 #define EOL "\n"
 #define EOL_LENGTH 1
 #define BACKLOG 100
-#define initPre "chron:"
 #define PHP_COMMAND "php-cgi html/test.php "
 
 
@@ -138,10 +137,10 @@ int sendHeader(int sockfd, unsigned char *message, unsigned char *value)
     //Render header
     sprintf(header,"%s: %s\r\n", message, value);
     //Send and free the header ptr
+    int ret = 0;
     if(sendString(sockfd, header) < 0)
-        int ret = -1;
-    else 
-        int ret = 0;
+        ret = -1;
+
     free(header);
     return ret;
 }

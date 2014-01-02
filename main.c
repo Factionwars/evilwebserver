@@ -1,11 +1,17 @@
+/** 
+ *  @file   main.c
+ *  @brief  HTTP webserver based on chrontions library
+ *  @author Factionwars@evilzone.org
+ *  @co-authors You and you
+ */
+
 #include <stdio.h>
 #include <pthread.h>
 #include "server.h"
-#include "chrontions.c"
+#include "evilnetlib.c"
 
 #define SERVER_NAME "EvilTinyHTTPD"
 
-long long open_connections = 0;
 long long requests = 0;
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
 
