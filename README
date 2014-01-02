@@ -5,7 +5,5 @@ IDEAS/TODO:
         This means that there is a full working ajax engine build on a low level to support l33t and fast requests
     
     2. If I want to i might complete the PHP support, not sure if i even want full PHP support.
-
-    3. Drink beer
     
-    4. Add modules such as authentication
+    3. Add modules such as authentication
