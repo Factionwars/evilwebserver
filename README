@@ -1,4 +1,10 @@
-An total accident project. Might rewrite in C++, or create a c library and get the deamon functionality into a c++ application.
+An Evilzone.org Project
+EvilWebserver/EvilNetLib C/C++ application/library
+
+Lead programmer: Factionwars
+Co-programmers: RedbullAddicted, Teddy
+
+Phase: Pre-Alpha
 
 IDEAS/TODO:
     1. Write this into a Ajax based front end engine <-- fucking rights on that idea
@@ -7,3 +13,5 @@ IDEAS/TODO:
     2. If I want to i might complete the PHP support, not sure if i even want full PHP support.
     
     3. Add modules such as authentication
+
+
