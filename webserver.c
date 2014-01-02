@@ -1,11 +1,11 @@
 /** 
- *  @file   main.c
- *  @brief  HTTP webserver based on chrontions library
+ *  @file   webserver.c
+ *  @brief  HTTP webserver based on evilnetlib library
  *  @author Factionwars@evilzone.org
  *  @co-authors You and you
  */
 #include "evilnetlib.h"
-#include "server.h"
+#include "webserver.h"
 
 
 #define SERVER_NAME "EvilTinyHTTPD"
