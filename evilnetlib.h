@@ -28,6 +28,9 @@ typedef struct {
     char * request_string;
 } http_request_t;
 
+http_client_t * initClientContainer();
+void cleanUpClient(http_client_t * client, http_request_t * http_request);
+
 int connectTo(struct in_addr *host, int port);
 int listenOn(int port);
 int acceptClient(int sockfd, struct sockaddr_in* client_addr);

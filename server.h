@@ -8,6 +8,5 @@
 
 int server();
 void *handleClient(void *client_void);
-http_client_t * initClientContainer();
 
 #endif

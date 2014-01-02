@@ -7,6 +7,47 @@
 #include "evilnetlib.h"
 
 /**
+ * @brief This function assigns a new client container
+ * @return New http_client_t container pointer
+ */
+http_client_t * initClientContainer()
+{
+    http_client_t *client_container;
+    client_container = (http_client_t *)malloc(sizeof(http_client_t));
+    client_container->addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    client_container->sockfd = 0;
+    return client_container;
+}
+
+/**
+ * @brief Cleans up a client container and a http_request container
+ * @return New http_client_t container pointer
+ */
+void cleanUpClient(http_client_t * client, http_request_t * http_request)
+{
+    if(client->sockfd != 0) {
+        close(client->sockfd);
+        client->sockfd = 0;
+    }
+    if(client->addr != NULL){
+        free(client->addr);
+        client->addr = NULL;
+    }
+    if(client != NULL){
+        free(client);
+        client = NULL;
+    }
+    if(http_request->request_string != NULL){
+        free(http_request->request_string);
+        http_request->request_string = NULL;
+    }
+    if(http_request->request_string != NULL) {
+        free(http_request);
+        http_request = NULL;
+    }
+}
+
+/**
  * @brief This function connects to a in_addr struck and port
  * @param *host Location struct
  * @param port Location Port

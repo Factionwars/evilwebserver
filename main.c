@@ -9,6 +9,7 @@
 
 
 #define SERVER_NAME "EvilTinyHTTPD"
+#define SERVER_PORT "1337"
 
 long long requests = 0;
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -21,63 +22,32 @@ int main(int argc, char * argv[])
 int server()
 {
     int sock_server;
-
-    sock_server = listenOn(1337);
-
-
+    //listen on the server port
+    sock_server = listenOn(SERVER_PORT);
+    //Create a pointer to keep the client in
     http_client_t *client_container;
-
+    //Init the first client container
     client_container = initClientContainer();
-
+    //Accept clients
     while(client_container->sockfd 
             = acceptClient(sock_server, client_container->addr)) {
-
+        //Create a new thread to assign to the new client
         pthread_t client_thread;
         pthread_create( &client_thread,
                 NULL,
                 &handleClient,
                 (void *)client_container);
+        //Detach the client, from this point the thread will live it's own life
         pthread_detach( client_thread );
-
+        //Create a new client container  for the next newcomer
         client_container = initClientContainer();
     }
-    close(sock_server);
 
+    close(sock_server);
     return 0;
 }
 
-http_client_t * initClientContainer()
-{
-    http_client_t *client_container;
-    client_container = (http_client_t *)malloc(sizeof(http_client_t));
-    client_container->addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-    client_container->sockfd = 0;
-    return client_container;
-}
 
-void cleanUpClient(http_client_t * client, http_request_t * http_request)
-{
-    if(client->sockfd != 0) {
-        close(client->sockfd);
-        client->sockfd = 0;
-    }
-    if(client->addr != NULL){
-        free(client->addr);
-        client->addr = NULL;
-    }
-    if(client != NULL){
-        free(client);
-        client = NULL;
-    }
-    if(http_request->request_string != NULL){
-        free(http_request->request_string);
-        http_request->request_string = NULL;
-    }
-    if(http_request->request_string != NULL) {
-        free(http_request);
-        http_request = NULL;
-    }
-}
 
 void logError(int level, http_client_t * client, http_request_t * http_request)
 {
