@@ -279,7 +279,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
     int ret = 0;
     //Read the PHP-CGI output from the FILE pipe and send it to the client
     while (fgets(buffer, 1024 - 1, child)) {
-        buffer[1024] = '\0';
+        buffer[1023] = '\0';
         if(sendString(sockfd, buffer) < 0){
             ret = -1;
             break;
