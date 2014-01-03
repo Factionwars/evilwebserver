@@ -3,7 +3,7 @@ CFLAGS=-pthread -ggdb -Wall
 all:
 	@echo Building EvilWebserver
 	@mkdir build -p
-	@$(CC) $(CFLAGS) source/webserver.c source/evilnetlib.c -o build/evilwebserver >& build/build.log
+	@$(CC) $(CFLAGS) source/webserver.c source/evilnetlib.c -o build/evilwebserver > build/build.log 2>&1
 	@cp html build/ -r
 	@echo Done! Output written to build/build.log
 clean:
