@@ -4,8 +4,8 @@
 #define EOL "\n"
 #define EOL_LENGTH 1
 #define BACKLOG 100
-#define PHP_COMMAND "php-cgi html/test.php "
-
+#define PHP_COMMAND "php-cgi"
+#define PHP_FILE "html/test.php"
 typedef struct { 
     int sockfd;
     struct sockaddr_in * addr;

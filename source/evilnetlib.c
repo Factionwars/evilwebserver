@@ -242,14 +242,37 @@ int sendFile(int sockfd, unsigned char *file_name)
 int sendPHP(int sockfd, http_request_t* http_request) 
 {
     //Render the PHP command 
+    /*
     char * command;
     command = (char *)malloc(strlen(PHP_COMMAND) + strlen(http_request->request_string) + 1);
     strcpy(command, PHP_COMMAND);
     strcpy(command + strlen(PHP_COMMAND), http_request->request_string);
 
     command[strlen(command) - 1] = '\0';
-    
-    FILE *child = popen(command, "r");
+    */
+    //Set environment variables
+    setenv("SCRIPT_FILENAME", PHP_FILE, 1);
+
+    if(http_request->request_type == 1)
+        setenv("REQUEST_METHOD", "GET", 1);
+    else if(http_request->request_type == 2)
+        setenv("REQUEST_METHOD", "POST", 1);
+
+    setenv("REDIRECT_STATUS", "200", 1);
+
+    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+
+    char * content_length = (char *)malloc(5);
+    snprintf(content_length, 5, "%d",strlen(http_request->request_string));
+    //TODO: Add remote host
+    //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
+    setenv("CONTENT_LENGHT", content_length, 1);
+    setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
+    setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
+    /*setenv("BODY", http_request->request_string, 1);*/
+
+    FILE *child = popen(PHP_COMMAND, "r");
+
 
     // error checking omitted.
     char * buffer = (char *)malloc(1024);
@@ -263,7 +286,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
         }
     }
     //Cleanup 
-    free(command);
+    //free(command);
     free(buffer);
     return ret;
 }
