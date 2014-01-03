@@ -242,14 +242,20 @@ int sendFile(int sockfd, unsigned char *file_name)
 int sendPHP(int sockfd, http_request_t* http_request) 
 {
     //Render the PHP command 
-    /*
+    
     char * command;
-    command = (char *)malloc(strlen(PHP_COMMAND) + strlen(http_request->request_string) + 1);
-    strcpy(command, PHP_COMMAND);
-    strcpy(command + strlen(PHP_COMMAND), http_request->request_string);
+    int php_length = strlen(PHP_COMMAND);
+    int request_length = strlen(http_request->request_string);
+    int command_length = php_length + request_length + 1;
 
-    command[strlen(command) - 1] = '\0';
-    */
+    command = (char *)malloc(command_length);
+    strcpy(command, PHP_COMMAND);
+    strcpy(command + php_length, http_request->request_string);
+    printf(":%s:", command);
+    command[php_length] = '"';
+    command[command_length - 1] = '"';
+    command[command_length] = '\0';
+    
     //Set environment variables
     setenv("SCRIPT_FILENAME", PHP_FILE, 1);
 
@@ -266,27 +272,27 @@ int sendPHP(int sockfd, http_request_t* http_request)
     snprintf(content_length, 5, "%d",strlen(http_request->request_string));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
-    setenv("CONTENT_LENGHT", content_length, 1);
+    //setenv("CONTENT_LENGHT", content_length, 1);
     setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
-    setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
+    //setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
     /*setenv("BODY", http_request->request_string, 1);*/
 
-    FILE *child = popen(PHP_COMMAND, "r");
-
+    FILE *child = popen(command, "r");
+    printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, command_length);
 
     // error checking omitted.
     char * buffer = (char *)malloc(1024);
     int ret = 0;
     //Read the PHP-CGI output from the FILE pipe and send it to the client
-    while (fgets(buffer, 1024 - 1, child)) {
-        buffer[1023] = '\0';
+    while (fgets(buffer, 1024 - 2, child)) {
+        buffer[1024 - 1] = '\0';
         if(sendString(sockfd, buffer) < 0){
             ret = -1;
             break;
         }
     }
     //Cleanup 
-    //free(command);
+    free(command);
     free(buffer);
     return ret;
 }
