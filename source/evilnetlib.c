@@ -242,30 +242,25 @@ int sendFile(int sockfd, unsigned char *file_name)
 int sendPHP(int sockfd, http_request_t* http_request) 
 {
     //Render the PHP command 
-    
     char * command;
-    int php_length = strlen(PHP_COMMAND);
-    int request_length = strlen(http_request->request_string);
-    int command_length = php_length + request_length + 1;
+    int command_length = strlen(PHP_COMMAND) + strlen(http_request->request_string) + strlen(PHP_FILE) + 5;
 
     command = (char *)malloc(command_length);
-    strcpy(command, PHP_COMMAND);
-    strcpy(command + php_length, http_request->request_string);
+
+    snprintf(command, command_length, "%s %s \"%s\"", PHP_COMMAND, PHP_FILE, http_request->request_string);
     printf(":%s:", command);
-    command[php_length] = '"';
-    command[command_length - 1] = '"';
-    command[command_length] = '\0';
-    
+
     //Set environment variables
     setenv("SCRIPT_FILENAME", PHP_FILE, 1);
 
-    if(http_request->request_type == 1)
-        setenv("REQUEST_METHOD", "GET", 1);
-    else if(http_request->request_type == 2)
+    if(http_request->request_type == 1){
+        setenv("REQUEST_METHOD", "GET", 1);        
+    } else if(http_request->request_type == 2){
         setenv("REQUEST_METHOD", "POST", 1);
+    }
 
     setenv("REDIRECT_STATUS", "200", 1);
-
+    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
 
     char * content_length = (char *)malloc(5);
