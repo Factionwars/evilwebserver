@@ -267,11 +267,14 @@ int sendPHP(int sockfd, http_request_t* http_request)
     snprintf(content_length, 5, "%d",strlen(http_request->request_string));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
-    //setenv("CONTENT_LENGHT", content_length, 1);
+    setenv("CONTENT_LENGHT", content_length, 1);
     setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
     //setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
-    /*setenv("BODY", http_request->request_string, 1);*/
-
+    setenv("BODY", http_request->request_string, 1);
+    /*
+    setuid(33);
+    setgid(33);
+    */
     FILE *child = popen(command, "r");
     printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, command_length);
 
