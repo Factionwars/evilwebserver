@@ -7,9 +7,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 
 #include <netdb.h>
@@ -68,8 +70,7 @@ int connectTo(struct in_addr *host, int port)
 {
     int sockfd;
     struct sockaddr_in target_addr;
-    unsigned char buffer[4096];
-
+    
     if((sockfd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
         return -1;    
 
@@ -92,8 +93,7 @@ int connectTo(struct in_addr *host, int port)
 int listenOn(int port)
 {
     int sockfd;
-
-    int new_sockfd, yes = 1;
+    int yes = 1;
 
     struct sockaddr_in host_addr;
 
@@ -144,7 +144,7 @@ int acceptClient(int sockfd, struct sockaddr_in* client_addr)
  * @param buffer string to send
  * @return 1 on success negative on failure
  */
-int sendString(int sockfd, unsigned char *buffer) 
+int sendString(int sockfd, char *buffer) 
 {
     //Pretty default function for sending a buffer to socket
     int send_bytes = 0;
@@ -166,7 +166,7 @@ int sendString(int sockfd, unsigned char *buffer)
  * @param value For example "Thu, 21 Dec 2012 14:06:53 GMT"
  * @return 0 or negative on failure
  */
-int sendHeader(int sockfd, unsigned char *message, unsigned char *value)
+int sendHeader(int sockfd, char *message, char *value)
 {
     int header_length = strlen(message) + strlen(value);
     char * header = (char*)malloc(header_length);
@@ -187,14 +187,14 @@ int sendHeader(int sockfd, unsigned char *message, unsigned char *value)
  * @param *file_name Name of the file to send
  * @return send bytes or negative on failure
  */
-int sendFile(int sockfd, unsigned char *file_name)
+int sendFile(int sockfd, char *file_name)
 {
 
     int file, length;
     //Pointer to play with
-    unsigned char * ptr;
+    char * ptr;
     //Backup pointer to ptr
-    unsigned char * bPtr;
+    char * bPtr;
     //Open file and get the filesize
     if((file = open(file_name, O_RDONLY, 0)) == -1)
         return -1;
@@ -210,7 +210,7 @@ int sendFile(int sockfd, unsigned char *file_name)
 
     sendString(sockfd, "\r\n");
 
-    if((ptr = (unsigned char *)malloc(length)) == NULL)
+    if((ptr = (char *)malloc(length)) == NULL)
         return -1;
     bPtr = ptr;
     if(read(file, ptr, length) == -1)
@@ -264,17 +264,14 @@ int sendPHP(int sockfd, http_request_t* http_request)
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
 
     char * content_length = (char *)malloc(5);
-    snprintf(content_length, 5, "%d",strlen(http_request->request_string));
+    snprintf(content_length, 5, "%d",(int)strlen(http_request->request_string));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
     setenv("CONTENT_LENGHT", content_length, 1);
     setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
     //setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
-    setenv("BODY", http_request->request_string, 1);
-    /*
-    setuid(33);
-    setgid(33);
-    */
+    //setenv("BODY", http_request->request_string, 1);
+    
     FILE *child = popen(command, "r");
     printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, command_length);
 
@@ -302,9 +299,9 @@ int sendPHP(int sockfd, http_request_t* http_request)
  * @param max_size max line size, do not exceed buffer size
  * @return line length or negative on failure
  */
-int recvLine(int sockfd, unsigned char *buffer, int max_size) 
+int recvLine(int sockfd, char *buffer, int max_size) 
 {
-    unsigned char *ptr = buffer;
+    char *ptr = buffer;
     while(recv(sockfd, ptr, 1, 0) == 1 && (ptr - buffer) <= (max_size / 2) ){
         if(*ptr == '\n'){ 
             break;
@@ -349,11 +346,11 @@ int get_file_size(int fd) {
 
 
 /* Some test functions for a custom protocol
-int sendInit(int sockfd, int type, unsigned char *value)
+int sendInit(int sockfd, int type, char *value)
 {
-    unsigned char * init_string;
+    char * init_string;
     int preLength = strlen(initPre);
-    if((init_string = (unsigned char *)malloc(preLength + 2 + EOL_LENGTH + strlen(value))) == NULL)
+    if((init_string = (char *)malloc(preLength + 2 + EOL_LENGTH + strlen(value))) == NULL)
         return -1;
     strcpy(init_string, initPre);
     init_string[preLength + 0] = '0' + type;

@@ -6,6 +6,9 @@
 #define BACKLOG 100
 #define PHP_COMMAND "php-cgi"
 #define PHP_FILE "html/test.php"
+#define DROP_UID 33
+#define DROP_GID 33
+
 typedef struct { 
     int sockfd;
     struct sockaddr_in * addr;
@@ -24,11 +27,11 @@ void cleanUpClient(http_client_t * client, http_request_t * http_request);
 int connectTo(struct in_addr *host, int port);
 int listenOn(int port);
 int acceptClient(int sockfd, struct sockaddr_in* client_addr);
-int sendString(int sockfd, unsigned char *buffer);
-int sendHeader(int sockfd, unsigned char *message, unsigned char *value);
-int sendFile(int sockfd, unsigned char *file_name);
+int sendString(int sockfd, char *buffer);
+int sendHeader(int sockfd, char *message, char *value);
+int sendFile(int sockfd, char *file_name);
 int sendPHP(int sockfd, http_request_t* http_request);
-int recvLine(int sockfd, unsigned char *buffer, int max_size);
+int recvLine(int sockfd, char *buffer, int max_size);
 int get_file_size(int fd);
 
 struct in_addr* lookUpHost(char * host);

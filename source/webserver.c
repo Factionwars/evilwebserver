@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include <time.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "evilnetlib.h"
 #include "webserver.h"
@@ -26,7 +27,7 @@
 long long requests = 0;
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-int main(int argc, char * argv[])
+int main()
 {
     return server();
 }
@@ -41,8 +42,8 @@ int server()
     //Init the first client container
     client_container = initClientContainer();
     //Accept clients
-    while(client_container->sockfd 
-            = acceptClient(sock_server, client_container->addr)) {
+    while((client_container->sockfd 
+        = acceptClient(sock_server, client_container->addr))) {
         //Create a new thread to assign to the new client
         pthread_t client_thread;
         pthread_create( &client_thread,
