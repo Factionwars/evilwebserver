@@ -9,6 +9,10 @@
 #define DROP_UID 33
 #define DROP_GID 33
 
+#define SERVER_NAME "EvilTinyHTTPD"
+#define SERVER_PORT 1337
+#define SERVER_SOFTWARE "EvilWebserver v0.2"
+
 typedef struct { 
     int sockfd;
     struct sockaddr_in * addr;
@@ -27,6 +31,7 @@ typedef struct {
     char * connection;
     char * content_type;
     char * content_length;
+    http_client_t * client;
 } http_request_t;
 
 http_client_t * initClientContainer();

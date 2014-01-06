@@ -251,7 +251,14 @@ int sendPHP(int sockfd, http_request_t* http_request)
     printf(":%s:", command);
 
     //Set environment variables
-    setenv("SCRIPT_FILENAME", PHP_FILE, 1);
+
+    setenv("GATEWAY_INTERFACE", "CGI/1.1", 0);
+    setenv("SERVER_NAME", SERVER_NAME, 0);
+    setenv("SERVER_PROTOCOL", "HTTP/1.1", 0);
+    setenv("SERVER_PORT", SERVER_PORT, 0);
+    setenv("SERVER_SOFTWARE", SERVER_SOFTWARE, 0);
+
+    setenv("REDIRECT_STATUS", "200", 1);
 
     if(http_request->request_type == 1){
         setenv("REQUEST_METHOD", "GET", 1);        
@@ -259,9 +266,11 @@ int sendPHP(int sockfd, http_request_t* http_request)
         setenv("REQUEST_METHOD", "POST", 1);
     }
 
-    setenv("REDIRECT_STATUS", "200", 1);
-    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
-    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+    setenv("PATH_INFO", "/monkey", 1);
+    setenv("QUERY_STRING", "lol=12&lol=105", 1);
+    setenv("REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), 1);
+    
+    setenv("SCRIPT_FILENAME", PHP_FILE, 1);
 
     char * content_length = (char *)malloc(5);
     snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
@@ -269,7 +278,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
     setenv("CONTENT_LENGHT", content_length, 1);
     setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
-    setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
+    /*setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);*/
     setenv("BODY", http_request->request_uri, 1);
     
     FILE *child = popen(command, "r");

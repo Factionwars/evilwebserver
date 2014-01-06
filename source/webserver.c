@@ -20,10 +20,6 @@
 #include "evilnetlib.h"
 #include "webserver.h"
 
-
-#define SERVER_NAME "EvilTinyHTTPD"
-#define SERVER_PORT 1337
-
 long long requests = 0;
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -80,7 +76,7 @@ void *handleClient(void *client_void)
         logError(3, client, http_request);
     http_request->request_uri = NULL;
     http_request->request_type = 0;
-
+    http_request->client = client;
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 
     int first = 0;
