@@ -37,6 +37,8 @@ int server()
     http_client_t *client_container;
     //Init the first client container
     client_container = initClientContainer();
+    //Init the first set of CGI vars
+    initCGI();
     //Accept clients
     while((client_container->sockfd 
         = acceptClient(sock_server, client_container->addr))) {
@@ -72,7 +74,7 @@ void *handleClient(void *client_void)
     http_request_t *http_request;
     char buffer[4000];
 
-    if( ( http_request = (http_request_t *)malloc(sizeof(http_request_t)) ) == NULL)
+    if( ( http_request = (http_request_t *)malloc(sizeof(http_request_t))) == NULL)
         logError(3, client, http_request);
     http_request->request_uri = NULL;
     http_request->request_type = 0;
@@ -86,17 +88,37 @@ void *handleClient(void *client_void)
         if(first == 0) {
             if(strncasecmp(buffer, "GET", 3) == 0) {
                 http_request->request_type = 1;
-                http_request->request_uri = strdup(buffer+4);            
+
+                char * query;
+                query = strchr(buffer, '?');
+
+                if(query == NULL){
+                    http_request->request_uri = strdup(buffer+4);
+                    http_request->request_query = NULL;
+                } else {
+                    int uri_length = query - buffer - 4;
+                    http_request->request_uri = strndup(buffer+4, uri_length);
+                    char * query_end = strchr(query, ' ');
+                    if(query == NULL)
+                        http_request->request_query = strdup(query + 1);
+                    else {
+                        int query_length = query_end - query - 1;
+                        http_request->request_query = strndup(query+1, query_length);
+                    }
+                        
+                }
+          
             } else if(strncasecmp(buffer, "POST", 4) == 0) {
                 http_request->request_type = 2;
-                http_request->request_uri = strdup(buffer+5); 
-            } 
+                http_request->request_uri = strdup(buffer+5);
+            }
             first++;
         } else {
             if(http_request->user_agent != NULL 
                 && strncasecmp(buffer, "User-Agent", 10) == 0) {
                 http_request->user_agent = strdup(buffer+10);            
-            } else if(strncasecmp(buffer, "Accept", 6) == 0) {
+            } else if(http_request->accept != NULL 
+                &&strncasecmp(buffer, "Accept", 6) == 0) {
                 http_request->request_uri = strdup(buffer+6); 
             } 
         }

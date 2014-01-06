@@ -54,7 +54,11 @@ void cleanUpClient(http_client_t * client, http_request_t * http_request)
         free(http_request->request_uri);
         http_request->request_uri = NULL;
     }
-    if(http_request->request_uri != NULL) {
+    if(http_request->request_query != NULL){
+        free(http_request->request_query);
+        http_request->request_query = NULL;
+    }
+    if(http_request != NULL) {
         free(http_request);
         http_request = NULL;
     }
@@ -233,6 +237,15 @@ int sendFile(int sockfd, char *file_name)
 
 }
 
+void initCGI()
+{
+    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
+    setenv("SERVER_NAME", SERVER_NAME, 1);
+    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+    setenv("SERVER_PORT", SERVER_PORT_CGI, 1);
+    setenv("SERVER_SOFTWARE", SERVER_SOFTWARE, 1);  
+}
+
 /**
  * @brief Open PHP-CGI session and sends it to the socket
  * @param sockfd remote socket to send to
@@ -252,12 +265,6 @@ int sendPHP(int sockfd, http_request_t* http_request)
 
     //Set environment variables
 
-    setenv("GATEWAY_INTERFACE", "CGI/1.1", 0);
-    setenv("SERVER_NAME", SERVER_NAME, 0);
-    setenv("SERVER_PROTOCOL", "HTTP/1.1", 0);
-    setenv("SERVER_PORT", SERVER_PORT, 0);
-    setenv("SERVER_SOFTWARE", SERVER_SOFTWARE, 0);
-
     setenv("REDIRECT_STATUS", "200", 1);
 
     if(http_request->request_type == 1){
@@ -265,9 +272,10 @@ int sendPHP(int sockfd, http_request_t* http_request)
     } else if(http_request->request_type == 2){
         setenv("REQUEST_METHOD", "POST", 1);
     }
-
-    setenv("PATH_INFO", "/monkey", 1);
-    setenv("QUERY_STRING", "lol=12&lol=105", 1);
+    if(http_request->request_uri != NULL)
+        setenv("PATH_INFO", http_request->request_uri, 1);
+    if(http_request->request_query != NULL)
+        setenv("QUERY_STRING", http_request->request_query, 1);
     setenv("REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), 1);
     
     setenv("SCRIPT_FILENAME", PHP_FILE, 1);

@@ -11,6 +11,7 @@
 
 #define SERVER_NAME "EvilTinyHTTPD"
 #define SERVER_PORT 1337
+#define SERVER_PORT_CGI "1337"
 #define SERVER_SOFTWARE "EvilWebserver v0.2"
 
 typedef struct { 
@@ -24,6 +25,7 @@ typedef struct {
     int request_type;
     char * request_uri;
     char * request_host;
+    char * request_query;
     char * user_agent;
     char * accept;
     char * accept_language;
@@ -36,6 +38,7 @@ typedef struct {
 
 http_client_t * initClientContainer();
 void cleanUpClient(http_client_t * client, http_request_t * http_request);
+void initCGI();
 
 int connectTo(struct in_addr *host, int port);
 int listenOn(int port);
