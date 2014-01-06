@@ -78,7 +78,7 @@ void *handleClient(void *client_void)
 
     if( ( http_request = (http_request_t *)malloc(sizeof(http_request_t)) ) == NULL)
         logError(3, client, http_request);
-    http_request->request_string = NULL;
+    http_request->request_uri = NULL;
     http_request->request_type = 0;
 
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
@@ -90,12 +90,19 @@ void *handleClient(void *client_void)
         if(first == 0) {
             if(strncasecmp(buffer, "GET", 3) == 0) {
                 http_request->request_type = 1;
-                http_request->request_string = strdup(buffer+4);            
+                http_request->request_uri = strdup(buffer+4);            
             } else if(strncasecmp(buffer, "POST", 4) == 0) {
                 http_request->request_type = 2;
-                http_request->request_string = strdup(buffer+5); 
+                http_request->request_uri = strdup(buffer+5); 
             } 
             first++;
+        } else {
+            if(http_request->user_agent != NULL 
+                && strncasecmp(buffer, "User-Agent", 10) == 0) {
+                http_request->user_agent = strdup(buffer+10);            
+            } else if(strncasecmp(buffer, "Accept", 6) == 0) {
+                http_request->request_uri = strdup(buffer+6); 
+            } 
         }
          printf("received: %s\n", buffer);
 
@@ -108,22 +115,22 @@ void *handleClient(void *client_void)
     struct tm tm = *gmtime(&now);
     strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
 
-    if(http_request->request_string != NULL){
+    if(http_request->request_uri != NULL){
         unsigned int i;
-        for(i = 0; i < strlen(http_request->request_string); i++){
-            if(http_request->request_string[i] == ' '){
-                if(strncasecmp(http_request->request_string + i + 1, "HTTP", 4) == 0){
-                    strncpy(client->http_version, http_request->request_string + i + 6, 3); 
+        for(i = 0; i < strlen(http_request->request_uri); i++){
+            if(http_request->request_uri[i] == ' '){
+                if(strncasecmp(http_request->request_uri + i + 1, "HTTP", 4) == 0){
+                    strncpy(client->http_version, http_request->request_uri + i + 6, 3); 
                     client->http_version[3] = '\0';
                 }                      
-                http_request->request_string[i] = '\0';
+                http_request->request_uri[i] = '\0';
             }
         }
     }
 
     if(http_request->request_type == 1 || http_request->request_type == 2)
     {        
-        if(http_request->request_string != NULL) {
+        if(http_request->request_uri != NULL) {
             sendString(client->sockfd, "HTTP/1.1 200 OK\r\n");
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);

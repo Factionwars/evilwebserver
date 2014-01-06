@@ -50,11 +50,11 @@ void cleanUpClient(http_client_t * client, http_request_t * http_request)
         free(client);
         client = NULL;
     }
-    if(http_request->request_string != NULL){
-        free(http_request->request_string);
-        http_request->request_string = NULL;
+    if(http_request->request_uri != NULL){
+        free(http_request->request_uri);
+        http_request->request_uri = NULL;
     }
-    if(http_request->request_string != NULL) {
+    if(http_request->request_uri != NULL) {
         free(http_request);
         http_request = NULL;
     }
@@ -243,12 +243,12 @@ int sendPHP(int sockfd, http_request_t* http_request)
 {
     //Render the PHP command 
     char * command;
-    int command_length = strlen(PHP_COMMAND) + strlen(http_request->request_string) + strlen(PHP_FILE) + 5;
+    int command_length = strlen(PHP_COMMAND) + strlen(http_request->request_uri) + strlen(PHP_FILE) + 5;
 
     command = (char *)malloc(command_length);
 
-    snprintf(command, command_length, "%s %s \"%s\"", PHP_COMMAND, PHP_FILE, http_request->request_string);
-    printf(":%s:", command);
+    snprintf(command, command_length, "%s %s \"%s\"", PHP_COMMAND, PHP_FILE, http_request->request_uri);
+
 
     //Set environment variables
     setenv("SCRIPT_FILENAME", PHP_FILE, 1);
@@ -264,16 +264,16 @@ int sendPHP(int sockfd, http_request_t* http_request)
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
 
     char * content_length = (char *)malloc(5);
-    snprintf(content_length, 5, "%d",(int)strlen(http_request->request_string));
+    snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
     setenv("CONTENT_LENGHT", content_length, 1);
     setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
-    //setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
-    //setenv("BODY", http_request->request_string, 1);
+    setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
+    setenv("BODY", http_request->request_uri, 1);
     
     FILE *child = popen(command, "r");
-    printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, command_length);
+    printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, http_request->request_type);
 
     // error checking omitted.
     char * buffer = (char *)malloc(1024);

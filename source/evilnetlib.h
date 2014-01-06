@@ -18,7 +18,15 @@ typedef struct {
 //request_type = 1:GET, 2:POST
 typedef struct {
     int request_type;
-    char * request_string;
+    char * request_uri;
+    char * request_host;
+    char * user_agent;
+    char * accept;
+    char * accept_language;
+    char * accept_encoding;
+    char * connection;
+    char * content_type;
+    char * content_length;
 } http_request_t;
 
 http_client_t * initClientContainer();
