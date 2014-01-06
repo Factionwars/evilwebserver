@@ -247,8 +247,8 @@ int sendPHP(int sockfd, http_request_t* http_request)
 
     command = (char *)malloc(command_length);
 
-    snprintf(command, command_length, "%s %s \"%s\"", PHP_COMMAND, PHP_FILE, http_request->request_uri);
-
+    snprintf(command, command_length, "%s %s", PHP_COMMAND, PHP_FILE);
+    printf(":%s:", command);
 
     //Set environment variables
     setenv("SCRIPT_FILENAME", PHP_FILE, 1);
