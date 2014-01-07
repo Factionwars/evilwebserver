@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-pthread -ggdb -O -Wall -Wextra
+CFLAGS=-pthread -ggdb -O -Wall -Wextra 
 all:
 	@echo Building EvilWebserver
 	@mkdir build -p

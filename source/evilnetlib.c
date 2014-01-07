@@ -58,6 +58,10 @@ void cleanUpClient(http_client_t * client, http_request_t * http_request)
         free(http_request->request_query);
         http_request->request_query = NULL;
     }
+    if(http_request->content_body != NULL){
+        free(http_request->content_body);
+        http_request->content_body = NULL;
+    }
     if(http_request != NULL) {
         free(http_request);
         http_request = NULL;
@@ -271,6 +275,10 @@ int sendPHP(int sockfd, http_request_t* http_request)
         setenv("REQUEST_METHOD", "GET", 1);        
     } else if(http_request->request_type == 2){
         setenv("REQUEST_METHOD", "POST", 1);
+        setenv("BODY", http_request->content_body, 1);        
+        char length[4];
+        snprintf(length, 4 ,"%d", http_request->content_length);
+        setenv("CONTENT_LENGTH", length, 1);
     }
     if(http_request->request_uri != NULL)
         setenv("PATH_INFO", http_request->request_uri, 1);
@@ -280,11 +288,11 @@ int sendPHP(int sockfd, http_request_t* http_request)
     
     setenv("SCRIPT_FILENAME", PHP_FILE, 1);
 
-    char * content_length = (char *)malloc(5);
-    snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
+    //char * content_length = (char *)malloc(5);
+    //snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
-    setenv("CONTENT_LENGHT", content_length, 1);
+    //setenv("CONTENT_LENGTH", content_length, 1);
     setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
     /*setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);*/
     setenv("BODY", http_request->request_uri, 1);

@@ -20,19 +20,20 @@ typedef struct {
     char http_version[4];
 } http_client_t;
 
+struct http_header{
+    char * name;
+    char * value;
+    struct http_header * next;
+};
+
 //request_type = 1:GET, 2:POST
 typedef struct {
     int request_type;
+    struct http_header * headers;
     char * request_uri;
-    char * request_host;
-    char * request_query;
-    char * user_agent;
-    char * accept;
-    char * accept_language;
-    char * accept_encoding;
-    char * connection;
-    char * content_type;
-    char * content_length;
+    char * request_query;    
+    int content_length;
+    char * content_body;
     http_client_t * client;
 } http_request_t;
 
