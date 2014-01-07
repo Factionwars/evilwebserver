@@ -50,11 +50,19 @@ void cleanUpClient(http_client_t * client, http_request_t * http_request)
         free(client);
         client = NULL;
     }
-    if(http_request->request_string != NULL){
-        free(http_request->request_string);
-        http_request->request_string = NULL;
+    if(http_request->request_uri != NULL){
+        free(http_request->request_uri);
+        http_request->request_uri = NULL;
     }
-    if(http_request->request_string != NULL) {
+    if(http_request->request_query != NULL){
+        free(http_request->request_query);
+        http_request->request_query = NULL;
+    }
+    if(http_request->content_body != NULL){
+        free(http_request->content_body);
+        http_request->content_body = NULL;
+    }
+    if(http_request != NULL) {
         free(http_request);
         http_request = NULL;
     }
@@ -233,6 +241,15 @@ int sendFile(int sockfd, char *file_name)
 
 }
 
+void initCGI()
+{
+    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
+    setenv("SERVER_NAME", SERVER_NAME, 1);
+    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+    setenv("SERVER_PORT", SERVER_PORT_CGI, 1);
+    setenv("SERVER_SOFTWARE", SERVER_SOFTWARE, 1);  
+}
+
 /**
  * @brief Open PHP-CGI session and sends it to the socket
  * @param sockfd remote socket to send to
@@ -243,7 +260,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
 {
     //Render the PHP command 
     char * command;
-    int command_length = strlen(PHP_COMMAND) + strlen(http_request->request_string) + strlen(PHP_FILE) + 5;
+    int command_length = strlen(PHP_COMMAND) + strlen(http_request->request_uri) + strlen(PHP_FILE) + 5;
 
     command = (char *)malloc(command_length);
 
@@ -251,29 +268,37 @@ int sendPHP(int sockfd, http_request_t* http_request)
     printf(":%s:", command);
 
     //Set environment variables
-    setenv("SCRIPT_FILENAME", PHP_FILE, 1);
+
+    setenv("REDIRECT_STATUS", "200", 1);
 
     if(http_request->request_type == 1){
         setenv("REQUEST_METHOD", "GET", 1);        
     } else if(http_request->request_type == 2){
         setenv("REQUEST_METHOD", "POST", 1);
+        setenv("BODY", http_request->content_body, 1);        
+        char length[4];
+        snprintf(length, 4 ,"%d", http_request->content_length);
+        setenv("CONTENT_LENGTH", length, 1);
     }
+    if(http_request->request_uri != NULL)
+        setenv("PATH_INFO", http_request->request_uri, 1);
+    if(http_request->request_query != NULL)
+        setenv("QUERY_STRING", http_request->request_query, 1);
+    setenv("REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), 1);
+    
+    setenv("SCRIPT_FILENAME", PHP_FILE, 1);
 
-    setenv("REDIRECT_STATUS", "200", 1);
-    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
-    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
-
-    char * content_length = (char *)malloc(5);
-    snprintf(content_length, 5, "%d",(int)strlen(http_request->request_string));
+    //char * content_length = (char *)malloc(5);
+    //snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
-    setenv("CONTENT_LENGHT", content_length, 1);
+    //setenv("CONTENT_LENGTH", content_length, 1);
     setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
-    //setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
-    //setenv("BODY", http_request->request_string, 1);
+    /*setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);*/
+    setenv("BODY", http_request->request_uri, 1);
     
     FILE *child = popen(command, "r");
-    printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, command_length);
+    printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, http_request->request_type);
 
     // error checking omitted.
     char * buffer = (char *)malloc(1024);

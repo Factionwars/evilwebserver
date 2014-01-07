@@ -9,20 +9,37 @@
 #define DROP_UID 33
 #define DROP_GID 33
 
+#define SERVER_NAME "EvilTinyHTTPD"
+#define SERVER_PORT 1337
+#define SERVER_PORT_CGI "1337"
+#define SERVER_SOFTWARE "EvilWebserver v0.2"
+
 typedef struct { 
     int sockfd;
     struct sockaddr_in * addr;
     char http_version[4];
 } http_client_t;
 
+struct http_header{
+    char * name;
+    char * value;
+    struct http_header * next;
+};
+
 //request_type = 1:GET, 2:POST
 typedef struct {
     int request_type;
-    char * request_string;
+    struct http_header * headers;
+    char * request_uri;
+    char * request_query;    
+    int content_length;
+    char * content_body;
+    http_client_t * client;
 } http_request_t;
 
 http_client_t * initClientContainer();
 void cleanUpClient(http_client_t * client, http_request_t * http_request);
+void initCGI();
 
 int connectTo(struct in_addr *host, int port);
 int listenOn(int port);
