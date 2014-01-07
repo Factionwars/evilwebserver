@@ -4,8 +4,8 @@
 #define EOL "\n"
 #define EOL_LENGTH 1
 #define BACKLOG 100
-#define PHP_COMMAND "php-cgi"
-#define PHP_FILE "html/test.php"
+#define PHP_COMMAND "/usr/bin/php-cgi"
+#define PHP_FILE "/home/factionwars/Programming/evilwebserver/html/test.php"
 #define DROP_UID 33
 #define DROP_GID 33
 

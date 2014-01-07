@@ -84,6 +84,7 @@ void *handleClient(void *client_void)
     http_request->request_query = NULL; 
     http_request->request_type  = 0;
     http_request->client = client;
+
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 
     //Init linked list struct
@@ -100,7 +101,7 @@ void *handleClient(void *client_void)
     int allength = sizeof(alheader) / sizeof(alheader[0]);
 
     int i = 0;
-    for(i = 0; i < 4; i++){
+    for(i = 0; i < allength; i++){
         theader->name = strdup(alheader[i]);
         theader->next = malloc(sizeof(struct http_header));
         theader = theader->next;
@@ -149,7 +150,7 @@ void *handleClient(void *client_void)
             //Temporary header
             theader = http_request->headers;
             //Parse header into the headers linked list
-            while(theader != NULL){    
+            while(theader != NULL){
                 if(nLength < 0 || nLength > 4064){
                     theader = theader->next;
                     continue;
@@ -157,20 +158,27 @@ void *handleClient(void *client_void)
                 char * end;
                 end = strchr(buffer + nLength, '\xd');
                 //value length
-                int vLength = end - buffer - nLength + 1;              
-
+                int vLength = end - buffer - nLength + 1;
                 //break;        
                 if(theader->value == NULL && theader->name != NULL 
                     && strncasecmp(buffer, theader->name, nLength) == 0){
-                    //TODO: parse whitespace                   
-                    theader->value = strndup(buffer + nLength + 1, vLength);                                                   
-                }
+                    //TODO: parse whitespace
+                    theader->value = strndup(buffer + nLength + 1, vLength);
+                    //Check for the content-length header
+                    if(strcasecmp(theader->name, "Content-Length") == 0){
+                        http_request->content_length = atoi(theader->value);
+                        if(http_request->content_length > 8192)
+                            http_request->content_length = 8192;
+                        if(http_request->content_length < 0)
+                            http_request->content_length = 0;
+                    }
+                }                            
                 theader = theader->next;
             }
         }
-         printf("received: %s\n", buffer);
+        printf("received: %s\n", buffer);
 
-         if(buffer[0] == '\xd')
+        if(buffer[0] == '\xd')
             break;
     }
 
@@ -194,7 +202,7 @@ void *handleClient(void *client_void)
                 if(strncasecmp(http_request->request_uri + i + 1, "HTTP", 4) == 0){
                     strncpy(client->http_version, http_request->request_uri + i + 6, 3); 
                     client->http_version[3] = '\0';
-                }                      
+                }
                 http_request->request_uri[i] = '\0';
             }
         }
@@ -207,8 +215,8 @@ void *handleClient(void *client_void)
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);            
 
-            sendFile(client->sockfd, "html/index.html");
-            //sendPHP(client->sockfd, http_request);
+            //sendFile(client->sockfd, "html/index.html");
+            sendPHP(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
             sendHeader(client->sockfd, "Server", SERVER_NAME);
