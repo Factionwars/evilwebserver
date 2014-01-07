@@ -26,8 +26,8 @@
 http_client_t * initClientContainer()
 {
     http_client_t *client_container;
-    client_container = (http_client_t *)malloc(sizeof(http_client_t));
-    client_container->addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    client_container = malloc(sizeof(http_client_t));
+    client_container->addr = malloc(sizeof(struct sockaddr_in));
     client_container->sockfd = 0;
     return client_container;
 }
@@ -61,6 +61,22 @@ void cleanUpClient(http_client_t * client, http_request_t * http_request)
     if(http_request->content_body != NULL){
         free(http_request->content_body);
         http_request->content_body = NULL;
+    }
+    if(http_request->headers != NULL){
+        struct http_header * previous;
+        //Clean linked list
+        printf("Cleaning up the dishes\n");
+        while(http_request->headers != NULL){            
+            //if(http_request->headers->name != NULL)
+            //    free(http_request->headers->name);
+            if(http_request->headers->value != NULL)
+                free(http_request->headers->value);
+            previous = http_request->headers;
+            http_request->headers = http_request->headers->next;
+            free(previous);
+        }
+        free(http_request->headers);
+        http_request->headers = NULL;
     }
     if(http_request != NULL) {
         free(http_request);
@@ -177,7 +193,7 @@ int sendString(int sockfd, char *buffer)
 int sendHeader(int sockfd, char *message, char *value)
 {
     int header_length = strlen(message) + strlen(value);
-    char * header = (char*)malloc(header_length);
+    char * header = malloc(header_length);
     //Render header
     sprintf(header,"%s: %s\r\n", message, value);
     //Send and free the header ptr
@@ -218,7 +234,7 @@ int sendFile(int sockfd, char *file_name)
 
     sendString(sockfd, "\r\n");
 
-    if((ptr = (char *)malloc(length)) == NULL)
+    if((ptr = malloc(length)) == NULL)
         return -1;
     bPtr = ptr;
     if(read(file, ptr, length) == -1)
@@ -262,7 +278,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
     char * command;
     int command_length = strlen(PHP_COMMAND) + strlen(http_request->request_uri) + strlen(PHP_FILE) + 5;
 
-    command = (char *)malloc(command_length);
+    command = malloc(command_length);
 
     snprintf(command, command_length, "%s %s", PHP_COMMAND, PHP_FILE);
     printf(":%s:", command);
@@ -288,7 +304,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
     
     setenv("SCRIPT_FILENAME", PHP_FILE, 1);
 
-    //char * content_length = (char *)malloc(5);
+    //char * content_length = malloc(5);
     //snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
@@ -301,7 +317,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
     printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, http_request->request_type);
 
     // error checking omitted.
-    char * buffer = (char *)malloc(1024);
+    char * buffer = malloc(1024);
     int ret = 0;
     //Read the PHP-CGI output from the FILE pipe and send it to the client
     while (fgets(buffer, 1024 - 2, child)) {

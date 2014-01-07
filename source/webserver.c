@@ -76,28 +76,39 @@ void *handleClient(void *client_void)
     http_client_t *client = (http_client_t*)client_void;
     http_request_t *http_request;
     char buffer[4000];
-
-    if( ( http_request = (http_request_t *)malloc(sizeof(http_request_t))) == NULL)
+    //Init Request struct
+    if( ( http_request = malloc(sizeof(http_request_t))) == NULL)
         logError(3, client, http_request);
-    http_request->request_uri = NULL;
-    http_request->request_type = 0;
+    http_request->request_uri   = NULL;
+    http_request->content_body  = NULL;
+    http_request->request_query = NULL; 
+    http_request->request_type  = 0;
     http_request->client = client;
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 
-    //Init linked list
-    http_request->headers = (struct http_header*)malloc(sizeof(struct http_header));
-    struct http_header* theader;
+    //Init linked list struct
+    http_request->headers = malloc(sizeof(struct http_header));
+    struct http_header * theader;
     //temp header for looping through the list
     theader = http_request->headers;
-    char *alheader[] = {"Content-Length", "User-Agent", "Accept", "Connection", "Host"};
-    int allength = sizeof(alheader) / sizeof(alheader[0]);
-    int i = 0;
-    for(i = 0; i < allength; i++){
-        theader->name = strdup(alheader[i]);
-        theader->next = (struct http_header*)malloc(sizeof(struct http_header));
-        theader = theader->next;
-    }
+    theader->name = NULL;
+    theader->value = NULL;
+    theader->next = NULL;
 
+    char *alheader[] = {"Content-Length", "User-Agent", "Accept", "Connection", "Host"};
+    //char *alheader[] = {"Content", ""};
+    int allength = sizeof(alheader) / sizeof(alheader[0]);
+
+    int i = 0;
+    for(i = 0; i < 4; i++){
+        theader->name = strdup(alheader[i]);
+        theader->next = malloc(sizeof(struct http_header));
+        theader = theader->next;
+        theader->name = NULL;
+        theader->value = NULL;
+        theader->next = NULL;
+    }
+    
     int first = 0;
     http_request->content_length = 0;
     while(recvLine(client->sockfd, buffer, 4000))
@@ -133,19 +144,31 @@ void *handleClient(void *client_void)
         } else {
             char * seperator;
             seperator = strchr(buffer, ':');
-            int length = seperator - buffer;
+            //Name Length
+            int nLength = seperator - buffer;
+            //Temporary header
             theader = http_request->headers;
-            while(theader->next != NULL){                
-                if(theader->value == NULL 
-                    && strncasecmp(buffer, theader->name, length) == 0){
-                    //TODO: parse whitespace                    
-                    theader->value = strdup(buffer + length + 1);  
-                    /*printf("Name: %s Value :%s:\n", theader->name, theader->value);  */               
+            //Parse header into the headers linked list
+            while(theader != NULL){    
+                if(nLength < 0 || nLength > 4064){
+                    theader = theader->next;
+                    continue;
+                }
+                char * end;
+                end = strchr(buffer + nLength, '\xd');
+                //value length
+                int vLength = end - buffer - nLength + 1;              
+
+                //break;        
+                if(theader->value == NULL && theader->name != NULL 
+                    && strncasecmp(buffer, theader->name, nLength) == 0){
+                    //TODO: parse whitespace                   
+                    theader->value = strndup(buffer + nLength + 1, vLength);                                                   
                 }
                 theader = theader->next;
             }
         }
-        printf("received: %s\n", buffer);
+         printf("received: %s\n", buffer);
 
          if(buffer[0] == '\xd')
             break;
@@ -153,7 +176,7 @@ void *handleClient(void *client_void)
 
     if(http_request->request_type == 2){
         if(http_request->content_length < 8192){
-            http_request->content_body = (char *)malloc(sizeof(char) * http_request->content_length);
+            http_request->content_body = malloc(sizeof(char) * http_request->content_length);
             //TODO: make sure everything is received
             recv(client->sockfd, http_request->content_body, http_request->content_length, 0);
         }
@@ -184,8 +207,8 @@ void *handleClient(void *client_void)
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);            
 
-            //sendFile(client->sockfd, "html/index.html");
-            sendPHP(client->sockfd, http_request);
+            sendFile(client->sockfd, "html/index.html");
+            //sendPHP(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
             sendHeader(client->sockfd, "Server", SERVER_NAME);
