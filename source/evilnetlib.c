@@ -275,7 +275,6 @@ char ** addEnv(char ** envp, char * name, char * value, int * length)
     }
     sprintf(vptr, "%s=%s", name, value);
     envp[*length] = vptr;
-    printf("%d Inserted string: %s\n", *length, envp[*length]);
     *length += 1;
     return envp;
 }
@@ -286,10 +285,20 @@ char ** addEnv(char ** envp, char * name, char * value, int * length)
  * @param http_request http_request object
  * @return 0 or negative on failure
  */
-int sendPHP(int sockfd, http_request_t* http_request) 
+int sendPHP(int sockfd, http_request_t* http_request)
+{
+    return sendCGI(sockfd, http_request, PHP_COMMAND, PHP_FILE);
+}
+
+int sendPython(int sockfd, http_request_t* http_request)
+{
+    return sendCGI(sockfd, http_request, PYTHON_COMMAND, PYTHON_FILE);
+}
+
+
+int sendCGI(int sockfd, http_request_t* http_request, char * command, char * script) 
 {
     //LENGTH INCREMEATION IS FAULTY
-
 
     //Set environment variables
     char ** envp = NULL;
@@ -320,7 +329,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
     //Remote ADDR Bugs
     envp = addEnv(envp, "REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), &envp_length);
     
-    envp = addEnv(envp, "SCRIPT_FILENAME", PHP_FILE, &envp_length);
+    envp = addEnv(envp, "SCRIPT_FILENAME", script, &envp_length);
 
     //char * content_length = malloc(5);
     //snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
@@ -335,7 +344,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
     envp = addEnv(envp, "SERVER_SOFTWARE", SERVER_SOFTWARE, &envp_length);
 
     //Argv list
-    char *argv[] = { PHP_COMMAND , PHP_FILE , 0 };
+    char *argv[] = { command , script , 0 };
     //Close environment list
     envp = realloc(envp, (envp_length) * sizeof(envp[0]));
     envp[envp_length] = 0;
@@ -370,7 +379,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
                 bptr += written;
             }
         }
-        //Read the PHP-CGI output from the pipe and send it to the client
+        //Read the CGI output from the pipe and send it to the client
         int received = 0;
         while (received = read(pipes[0], buffer, 1023)) {
             buffer[received] = '\0';
@@ -381,7 +390,7 @@ int sendPHP(int sockfd, http_request_t* http_request)
         }
         close(pipes[0]);
         close(pipes[3]);
-        /*  
+        /*  Bugger  TODO: clean this cleanup
         while(envp_length--)
             free(envp[envp_length]);
         free(envp);
@@ -394,8 +403,8 @@ int sendPHP(int sockfd, http_request_t* http_request)
         dup2(pipes[1], fileno(stdout));
         dup2(pipes[2], fileno(stdin));
 
-        execve(PHP_COMMAND, &argv[0], envp);     
-        printf("Failed to launch PHP script\xd\n");
+        execve(command, &argv[0], envp);     
+        printf("Failed to launch CGI application\n");
         exit(0);
     }
 

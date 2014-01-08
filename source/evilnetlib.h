@@ -5,7 +5,9 @@
 #define EOL_LENGTH 1
 #define BACKLOG 100
 #define PHP_COMMAND "/usr/bin/php-cgi"
-#define PHP_FILE "/home/factionwars/Programming/evilwebserver/html/test.php"
+#define PHP_FILE "scripts/test.php"
+#define PYTHON_COMMAND "/usr/bin/php-cgi"
+#define PYTHON_FILE "scripts/test.php"
 #define DROP_UID 33
 #define DROP_GID 33
 
@@ -47,7 +49,11 @@ int acceptClient(int sockfd, struct sockaddr_in* client_addr);
 int sendString(int sockfd, char *buffer);
 int sendHeader(int sockfd, char *message, char *value);
 int sendFile(int sockfd, char *file_name);
+
+char ** addEnv(char ** envp, char * name, char * value, int * length);
+int sendCGI(int sockfd, http_request_t* http_request, char * command, char * script);
 int sendPHP(int sockfd, http_request_t* http_request);
+int sendPython(int sockfd, http_request_t* http_request);
 int recvLine(int sockfd, char *buffer, int max_size);
 int get_file_size(int fd);
 
