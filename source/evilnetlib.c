@@ -26,8 +26,8 @@
 http_client_t * initClientContainer()
 {
     http_client_t *client_container;
-    client_container = (http_client_t *)malloc(sizeof(http_client_t));
-    client_container->addr = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
+    client_container = malloc(sizeof(http_client_t));
+    client_container->addr = malloc(sizeof(struct sockaddr_in));
     client_container->sockfd = 0;
     return client_container;
 }
@@ -54,7 +54,30 @@ void cleanUpClient(http_client_t * client, http_request_t * http_request)
         free(http_request->request_uri);
         http_request->request_uri = NULL;
     }
-    if(http_request->request_uri != NULL) {
+    if(http_request->request_query != NULL){
+        free(http_request->request_query);
+        http_request->request_query = NULL;
+    }
+    if(http_request->content_body != NULL){
+        free(http_request->content_body);
+        http_request->content_body = NULL;
+    }
+    if(http_request->headers != NULL){
+        struct http_header * previous;
+        //Clean linked list
+        while(http_request->headers != NULL){            
+            if(http_request->headers->name != NULL)
+                free(http_request->headers->name);
+            if(http_request->headers->value != NULL)
+                free(http_request->headers->value);
+            previous = http_request->headers;
+            http_request->headers = http_request->headers->next;
+            free(previous);
+        }
+        free(http_request->headers);
+        http_request->headers = NULL;
+    }
+    if(http_request != NULL) {
         free(http_request);
         http_request = NULL;
     }
@@ -169,7 +192,7 @@ int sendString(int sockfd, char *buffer)
 int sendHeader(int sockfd, char *message, char *value)
 {
     int header_length = strlen(message) + strlen(value);
-    char * header = (char*)malloc(header_length);
+    char * header = malloc(header_length);
     //Render header
     sprintf(header,"%s: %s\r\n", message, value);
     //Send and free the header ptr
@@ -210,7 +233,7 @@ int sendFile(int sockfd, char *file_name)
 
     sendString(sockfd, "\r\n");
 
-    if((ptr = (char *)malloc(length)) == NULL)
+    if((ptr = malloc(length)) == NULL)
         return -1;
     bPtr = ptr;
     if(read(file, ptr, length) == -1)
@@ -233,63 +256,179 @@ int sendFile(int sockfd, char *file_name)
 
 }
 
+void initCGI()
+{
+ 
+}
+
+char ** addEnv(char ** envp, char * name, char * value, int * length)
+{
+    envp = realloc(envp, (*length + 1) * sizeof(char *));
+    if (envp == NULL) {
+        perror("realloc");
+        exit(EXIT_FAILURE);
+    }
+    char * vptr = malloc( (2 + strlen(name) + strlen(value)) * sizeof(char));
+    if(vptr == NULL){
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+    sprintf(vptr, "%s=%s", name, value);
+    envp[*length] = vptr;
+    *length += 1;
+    return envp;
+}
+
 /**
  * @brief Open PHP-CGI session and sends it to the socket
  * @param sockfd remote socket to send to
  * @param http_request http_request object
  * @return 0 or negative on failure
  */
-int sendPHP(int sockfd, http_request_t* http_request) 
+int sendPHP(int sockfd, http_request_t* http_request)
 {
-    //Render the PHP command 
-    char * command;
-    int command_length = strlen(PHP_COMMAND) + strlen(http_request->request_uri) + strlen(PHP_FILE) + 5;
+    return sendCGI(sockfd, http_request, PHP_COMMAND, PHP_FILE);
+}
 
-    command = (char *)malloc(command_length);
+int sendPython(int sockfd, http_request_t* http_request)
+{
+    return sendCGI(sockfd, http_request, PYTHON_COMMAND, PYTHON_FILE);
+}
 
-    snprintf(command, command_length, "%s %s", PHP_COMMAND, PHP_FILE);
-    printf(":%s:", command);
+
+int sendCGI(int sockfd, http_request_t* http_request, char * command, char * script) 
+{
+    //LENGTH INCREMEATION IS FAULTY
 
     //Set environment variables
-    setenv("SCRIPT_FILENAME", PHP_FILE, 1);
+    char ** envp = NULL;
+    char * raw;
+    //envp = malloc(sizeof(char*));
+
+    //envp[0] = malloc(sizeof(char *));
+
+    int envp_length = 0;
+ 
+    envp = addEnv(envp, "REDIRECT_STATUS", "200", &envp_length);
 
     if(http_request->request_type == 1){
-        setenv("REQUEST_METHOD", "GET", 1);        
+        envp = addEnv(envp, "REQUEST_METHOD", "GET", &envp_length);
     } else if(http_request->request_type == 2){
-        setenv("REQUEST_METHOD", "POST", 1);
+       envp = addEnv(envp, "REQUEST_METHOD", "POST", &envp_length);
+        if(http_request->content_body != NULL)
+            envp = addEnv(envp, "BODY", http_request->content_body, &envp_length); 
+        //Render content Length       
+        char clength[4];
+        snprintf(clength, 4 ,"%d", http_request->content_length);
+        envp = addEnv(envp, "CONTENT_LENGTH", clength, &envp_length);
     }
+    if(http_request->request_uri != NULL)
+        envp = addEnv(envp, "PATH_INFO", http_request->request_uri, &envp_length);
+    if(http_request->request_query != NULL)
+        envp = addEnv(envp, "QUERY_STRING", http_request->request_query, &envp_length);
+    //Remote ADDR Bugs
+    envp = addEnv(envp, "REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), &envp_length);
+    
+    envp = addEnv(envp, "SCRIPT_FILENAME", script, &envp_length);
 
-    setenv("REDIRECT_STATUS", "200", 1);
-    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
-    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
-
-    char * content_length = (char *)malloc(5);
-    snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
+    //char * content_length = malloc(5);
+    //snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
-    setenv("CONTENT_LENGHT", content_length, 1);
-    setenv("HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8", 1);
-    setenv("CONTENT_TYPE", "application/x-www-form-urlencoded", 1);
-    setenv("BODY", http_request->request_uri, 1);
+    envp = addEnv(envp, "HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\0", &envp_length);
+    envp = addEnv(envp, "CONTENT_TYPE", "application/x-www-form-urlencoded\0", &envp_length);
+    envp = addEnv(envp, "GATEWAY_INTERFACE","CGI/1.1\0", &envp_length);
+    envp = addEnv(envp, "SERVER_NAME", SERVER_NAME, &envp_length);
+    envp = addEnv(envp, "SERVER_PROTOCOL", "HTTP/1.1\0", &envp_length);
+    envp = addEnv(envp, "SERVER_PORT", SERVER_PORT_CGI, &envp_length);
+    envp = addEnv(envp, "SERVER_SOFTWARE", SERVER_SOFTWARE, &envp_length);
+
+    //Argv list
+    char *argv[] = { command , script , 0 };
+    //Close environment list
+    envp = realloc(envp, (envp_length) * sizeof(envp[0]));
+    envp[envp_length] = 0;
+
+    pid_t pid;
+    int pipes[4];
+
+    /* Warning: I'm not handling possible errors in pipe/fork */
+
+    pipe(&pipes[0]); /* Parent read/child write pipe */
+    pipe(&pipes[2]); /* Child read/parent write pipe */
+
+    if ((pid = fork()) > 0) {
+        /* Parent process */
+        //pipes[0]; /* Read end */
+        //pipes[3]; /* Write end*/
+
+        close(pipes[1]);
+        close(pipes[2]);
+
+        char buffer[1024];
+        int ret = 0;
+        //If request is post write the body 
+        if(http_request->request_type == 2){
+            int to_write = http_request->content_length;
+            int written = 0;
+            char * bptr; /* body pointer*/
+            bptr = http_request->content_body;
+            while(to_write > 0){
+                written = write(pipes[3], bptr, to_write);
+                to_write -= written;
+                bptr += written;
+            }
+        }
+        //Read the CGI output from the pipe and send it to the client
+        int received = 0;
+        while (received = read(pipes[0], buffer, 1023)) {
+            buffer[received] = '\0';
+            if(sendString(sockfd, (char *)buffer) < 0){
+                ret = -1;
+                break;
+            }
+        }
+        close(pipes[0]);
+        close(pipes[3]);
+        /*  Bugger  TODO: clean this cleanup
+        while(envp_length--)
+            free(envp[envp_length]);
+        free(envp);
+        */
+
+    } else {
+        close(pipes[0]);
+        close(pipes[3]);
+
+        dup2(pipes[1], fileno(stdout));
+        dup2(pipes[2], fileno(stdin));
+
+        execve(command, &argv[0], envp);     
+        printf("Failed to launch CGI application\n");
+        exit(0);
+    }
+
+    return -1;
+
+    /*
     
     FILE *child = popen(command, "r");
-    printf("PHP command: %s;\nREQUEST TYPE: %d\n", command, http_request->request_type);
 
     // error checking omitted.
-    char * buffer = (char *)malloc(1024);
+    char * buffer[1024];
     int ret = 0;
     //Read the PHP-CGI output from the FILE pipe and send it to the client
-    while (fgets(buffer, 1024 - 2, child)) {
+    while (fgets((char *)buffer, 1024 - 2, child)) {
         buffer[1024 - 1] = '\0';
-        if(sendString(sockfd, buffer) < 0){
+        if(sendString(sockfd, (char *)buffer) < 0){
             ret = -1;
             break;
         }
     }
+
     //Cleanup 
-    free(command);
-    free(buffer);
     return ret;
+    */
 }
 
 /**
