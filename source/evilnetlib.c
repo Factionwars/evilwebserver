@@ -261,15 +261,23 @@ void initCGI()
  
 }
 
-void addEnv(char * envp[], char * name, char * value, int * length)
+char ** addEnv(char ** envp, char * name, char * value, int * length)
 {
-    envp = realloc(envp, ((*length) + 1) * sizeof(char*));
-
+    envp = realloc(envp, (*length + 1) * sizeof(char *));
+    if (envp == NULL) {
+        perror("realloc");
+        exit(EXIT_FAILURE);
+    }
     char * vptr = malloc( (2 + strlen(name) + strlen(value)) * sizeof(char));
+    if(vptr == NULL){
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
     sprintf(vptr, "%s=%s", name, value);
     envp[*length] = vptr;
     printf("%d Inserted string: %s\n", *length, envp[*length]);
-    (*length)++;
+    *length += 1;
+    return envp;
 }
 
 /**
@@ -292,47 +300,45 @@ int sendPHP(int sockfd, http_request_t* http_request)
 
     int envp_length = 0;
  
-    addEnv(envp, "REDIRECT_STATUS", "200", &envp_length);
-    
+    envp = addEnv(envp, "REDIRECT_STATUS", "200", &envp_length);
+
     if(http_request->request_type == 1){
-        addEnv(envp, "REQUEST_METHOD", "GET", &envp_length);
+        envp = addEnv(envp, "REQUEST_METHOD", "GET", &envp_length);
     } else if(http_request->request_type == 2){
-       addEnv(envp, "REQUEST_METHOD", "POST", &envp_length);
+       envp = addEnv(envp, "REQUEST_METHOD", "POST", &envp_length);
         if(http_request->content_body != NULL)
-            addEnv(envp, "BODY", http_request->content_body, &envp_length); 
+            envp = addEnv(envp, "BODY", http_request->content_body, &envp_length); 
         //Render content Length       
         char clength[4];
         snprintf(clength, 4 ,"%d", http_request->content_length);
-        addEnv(envp, "CONTENT_LENGTH", clength, &envp_length);
+        envp = addEnv(envp, "CONTENT_LENGTH", clength, &envp_length);
     }
     if(http_request->request_uri != NULL)
-        addEnv(envp, "PATH_INFO", http_request->request_uri, &envp_length);
+        envp = addEnv(envp, "PATH_INFO", http_request->request_uri, &envp_length);
     if(http_request->request_query != NULL)
-        addEnv(envp, "QUERY_STRING", http_request->request_query, &envp_length);
+        envp = addEnv(envp, "QUERY_STRING", http_request->request_query, &envp_length);
     //Remote ADDR Bugs
-    addEnv(envp, "REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), &envp_length);
+    envp = addEnv(envp, "REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), &envp_length);
     
-    addEnv(envp, "SCRIPT_FILENAME", PHP_FILE, &envp_length);
+    envp = addEnv(envp, "SCRIPT_FILENAME", PHP_FILE, &envp_length);
 
     //char * content_length = malloc(5);
     //snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
     //TODO: Add remote host
     //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
-    //setenv("CONTENT_LENGTH", content_length, 1);
-    addEnv(envp, "HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\0", &envp_length);
-    addEnv(envp, "CONTENT_TYPE", "application/x-www-form-urlencoded\0", &envp_length);
-    addEnv(envp, "GATEWAY_INTERFACE","CGI/1.1\0", &envp_length);
-    addEnv(envp, "SERVER_NAME", SERVER_NAME, &envp_length);
-    addEnv(envp, "SERVER_PROTOCOL", "HTTP/1.1\0", &envp_length);
-    addEnv(envp, "SERVER_PORT", SERVER_PORT_CGI, &envp_length);
-    addEnv(envp, "SERVER_SOFTWARE", SERVER_SOFTWARE, &envp_length);
+    envp = addEnv(envp, "HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\0", &envp_length);
+    envp = addEnv(envp, "CONTENT_TYPE", "application/x-www-form-urlencoded\0", &envp_length);
+    envp = addEnv(envp, "GATEWAY_INTERFACE","CGI/1.1\0", &envp_length);
+    envp = addEnv(envp, "SERVER_NAME", SERVER_NAME, &envp_length);
+    envp = addEnv(envp, "SERVER_PROTOCOL", "HTTP/1.1\0", &envp_length);
+    envp = addEnv(envp, "SERVER_PORT", SERVER_PORT_CGI, &envp_length);
+    envp = addEnv(envp, "SERVER_SOFTWARE", SERVER_SOFTWARE, &envp_length);
 
     //Argv list
-    char *argv[] = { PHP_COMMAND , PHP_FILE };
+    char *argv[] = { PHP_COMMAND , PHP_FILE , 0 };
     //Close environment list
-    envp = realloc(envp, (envp_length + 1) * sizeof(envp[0]));
-    envp[envp_length] = NULL;
-    printf("%d Inserted string: %s\n", envp_length, envp[envp_length]);
+    envp = realloc(envp, (envp_length) * sizeof(envp[0]));
+    envp[envp_length] = 0;
 
     pid_t pid;
     int pipes[4];
@@ -352,24 +358,40 @@ int sendPHP(int sockfd, http_request_t* http_request)
 
         char buffer[1024];
         int ret = 0;
+        //If request is post write the body 
+        if(http_request->request_type == 2){
+            int to_write = http_request->content_length;
+            int written = 0;
+            char * bptr; /* body pointer*/
+            bptr = http_request->content_body;
+            while(to_write > 0){
+                written = write(pipes[3], bptr, to_write);
+                to_write -= written;
+                bptr += written;
+            }
+        }
         //Read the PHP-CGI output from the pipe and send it to the client
-
         while (read(pipes[0], buffer, sizeof(buffer))) {
             buffer[1024 - 1] = '\0';
             if(sendString(sockfd, (char *)buffer) < 0){
                 ret = -1;
                 break;
             }
-        }        
+        }
+        close(pipes[0]);
+        close(pipes[3]);
+        while(envp_length--)
+            free(envp[envp_length]);
+        free(envp);
 
     } else {
         close(pipes[0]);
         close(pipes[3]);
 
-        //dup2(pipes[1], fileno(stdout));
-        //dup2(pipes[2], fileno(stdin));
+        dup2(pipes[1], fileno(stdout));
+        dup2(pipes[2], fileno(stdin));
 
-        execve(argv[0], &argv[0], envp);     
+        execve(PHP_COMMAND, &argv[0], envp);     
         printf("Failed to launch PHP script\xd\n");
         exit(0);
     }
