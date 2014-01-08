@@ -216,7 +216,8 @@ void *handleClient(void *client_void)
             sendHeader(client->sockfd, "Date", buf);            
 
             //sendFile(client->sockfd, "html/index.html");
-            sendPHP(client->sockfd, http_request);
+            //sendPHP(client->sockfd, http_request);
+            sendPython(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
             sendHeader(client->sockfd, "Server", SERVER_NAME);
