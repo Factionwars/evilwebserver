@@ -371,8 +371,9 @@ int sendPHP(int sockfd, http_request_t* http_request)
             }
         }
         //Read the PHP-CGI output from the pipe and send it to the client
-        while (read(pipes[0], buffer, sizeof(buffer))) {
-            buffer[1024 - 1] = '\0';
+        int received = 0;
+        while (received = read(pipes[0], buffer, 1023)) {
+            buffer[received] = '\0';
             if(sendString(sockfd, (char *)buffer) < 0){
                 ret = -1;
                 break;
@@ -380,9 +381,11 @@ int sendPHP(int sockfd, http_request_t* http_request)
         }
         close(pipes[0]);
         close(pipes[3]);
+        /*  
         while(envp_length--)
             free(envp[envp_length]);
         free(envp);
+        */
 
     } else {
         close(pipes[0]);
