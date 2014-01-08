@@ -4,22 +4,24 @@
 # Project: Simple CGI test of POST requests.
 # Date: 1/7/2014
 
-import cgi, cgitb
+# Import modules for CGI handling 
+import cgi, cgitb 
 
-form = cgi.FieldStorage()
+# Create instance of FieldStorage 
+form = cgi.FieldStorage() 
 
-username = form.getValue('username')
-password = form.getValue('password')
+# Get data from fields
+username = form.getvalue('username')
+password  = form.getvalue('password')
 
 print "Content-type:text/html\r\n\r\n"
 print "<html>"
 print "<head>"
-print "<title>CGI test for Evilwebserver</title>"
+print "<title>Python CGI-test</title>"
 print "</head>"
 print "<body>"
-print "<h2>Username: %s Password: %s</h2>" % (username, password)
+print "<h1>Username: %s Password: %s</h1>" % (username, password)
 print "</body>"
 print "</html>"
-
 
 
