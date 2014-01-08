@@ -1,16 +1,13 @@
 #!/usr/bin/Python
 
-# Author: Phage
+# Author: Phage@evilzone.org
 # Project: Simple CGI test of POST requests.
-# Date: 1/7/2014
+# Date: 1/8/2014
 
-# Import modules for CGI handling 
 import cgi, cgitb 
 
-# Create instance of FieldStorage 
 form = cgi.FieldStorage() 
 
-# Get data from fields
 username = form.getvalue('username')
 password  = form.getvalue('password')
 
