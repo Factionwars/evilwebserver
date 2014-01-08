@@ -5,7 +5,9 @@
 #define EOL_LENGTH 1
 #define BACKLOG 100
 #define PHP_COMMAND "/usr/bin/php-cgi"
-#define PHP_FILE "scripts/test.php"
+//#define PHP_FILE "scripts/test.php"
+#define PHP_FILE "/srv/http/water/index.php"
+
 #define PYTHON_COMMAND "/usr/bin/python2"
 #define PYTHON_FILE "scripts/cgi_test.py"
 #define DROP_UID 33
