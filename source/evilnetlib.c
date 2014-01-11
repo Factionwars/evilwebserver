@@ -79,7 +79,6 @@ void cleanUpClient(http_client_t * client, http_request_t * http_request)
     }
     if(http_request != NULL) {
         free(http_request);
-        http_request = NULL;
     }
 }
 
@@ -263,6 +262,7 @@ void initCGI()
 
 char ** addEnv(char ** envp, char * name, char * value, int * length)
 {
+    //BUG realoc sizeof char *
     envp = realloc(envp, (*length + 1) * sizeof(char *));
     if (envp == NULL) {
         perror("realloc");
@@ -275,6 +275,7 @@ char ** addEnv(char ** envp, char * name, char * value, int * length)
     }
     sprintf(vptr, "%s=%s", name, value);
     envp[*length] = vptr;
+    printf("insert at: %d string %s\n", (*length), vptr);   
     *length += 1;
     return envp;
 }
@@ -299,10 +300,10 @@ int sendPython(int sockfd, http_request_t* http_request)
 int sendCGI(int sockfd, http_request_t* http_request, char * command, char * script) 
 {
     //LENGTH INCREMEATION IS FAULTY
+    //BODY enviroment free is faulty
 
     //Set environment variables
     char ** envp = NULL;
-    char * raw;
     //envp = malloc(sizeof(char*));
 
     //envp[0] = malloc(sizeof(char *));
@@ -352,10 +353,10 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
     pid_t pid;
     int pipes[4];
 
-    /* Warning: I'm not handling possible errors in pipe/fork */
-
-    pipe(&pipes[0]); /* Parent read/child write pipe */
-    pipe(&pipes[2]); /* Child read/parent write pipe */
+    if(pipe(&pipes[0]) < 0)/* Parent read/child write pipe */
+        return -1;
+    if(pipe(&pipes[2]) < 0) /* Child read/parent write pipe */
+        return -1;
 
     if ((pid = fork()) > 0) {
         /* Parent process */
@@ -381,7 +382,7 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
         }
         //Read the CGI output from the pipe and send it to the client
         int received = 0;
-        while (received = read(pipes[0], buffer, 1023)) {
+        while ((received = read(pipes[0], buffer, 1023))) {
             buffer[received] = '\0';
             if(sendString(sockfd, (char *)buffer) < 0){
                 ret = -1;
@@ -390,18 +391,26 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
         }
         close(pipes[0]);
         close(pipes[3]);
-        /*  Bugger  TODO: clean this cleanup
-        while(envp_length--)
+        
+        //Cleanup enviroment
+        while(envp_length--){
+            printf("%d cleaning %s\n", envp_length, envp[envp_length]);
             free(envp[envp_length]);
-        free(envp);
-        */
+        }
+                             
+        //free(envp);
+
+        return 0;
 
     } else {
         close(pipes[0]);
         close(pipes[3]);
-
+        //Duplicate our pipes against STDIN/STDOUT
         dup2(pipes[1], fileno(stdout));
         dup2(pipes[2], fileno(stdin));
+        //If enabled also pipe against STDERR
+        if(CGI_ERRORS)
+            dup2(pipes[1], fileno(stderr));
 
         execve(command, &argv[0], envp);     
         printf("Failed to launch CGI application\n");
@@ -410,25 +419,6 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
 
     return -1;
 
-    /*
-    
-    FILE *child = popen(command, "r");
-
-    // error checking omitted.
-    char * buffer[1024];
-    int ret = 0;
-    //Read the PHP-CGI output from the FILE pipe and send it to the client
-    while (fgets((char *)buffer, 1024 - 2, child)) {
-        buffer[1024 - 1] = '\0';
-        if(sendString(sockfd, (char *)buffer) < 0){
-            ret = -1;
-            break;
-        }
-    }
-
-    //Cleanup 
-    return ret;
-    */
 }
 
 /**
