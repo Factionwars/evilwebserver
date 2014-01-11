@@ -9,6 +9,8 @@
 
 #define PYTHON_COMMAND "/usr/bin/python2"
 #define PYTHON_FILE "scripts/cgi_test.py"
+
+#define CGI_ERRORS 1
 #define DROP_UID 33
 #define DROP_GID 33
 

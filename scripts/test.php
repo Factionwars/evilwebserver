@@ -1,5 +1,4 @@
 <?php
-phpinfo(); die;
     echo 'PHP works evilguys<br/>';
     echo 'GET: '; var_dump($_GET);
     echo '<br/>';

@@ -75,18 +75,21 @@ void *handleClient(void *client_void)
     signal(SIGPIPE, SIG_IGN);
     http_client_t *client = (http_client_t*)client_void;
     http_request_t *http_request;
-    char buffer[4000];
+
     //Init Request struct
     if( ( http_request = malloc(sizeof(http_request_t))) == NULL)
         logError(3, client, http_request);
+    //Initialize pointers to NULL
+    // so we know if we can free them or not
     http_request->request_uri   = NULL;
     http_request->content_body  = NULL;
     http_request->request_query = NULL; 
     http_request->request_type  = 0;
     http_request->client = client;
 
+#if DEBUG
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
-
+#endif
     //Init linked list struct
     http_request->headers = malloc(sizeof(struct http_header));
     struct http_header * theader;
@@ -96,10 +99,11 @@ void *handleClient(void *client_void)
     theader->value = NULL;
     theader->next = NULL;
 
+    //Allowed headers to parse and pass-on
     char *alheader[] = {"Content-Length", "User-Agent", "Accept", "Connection", "Host"};
-    //char *alheader[] = {"Content", ""};
+    //alheader array length
     int allength = sizeof(alheader) / sizeof(alheader[0]);
-
+    //Create the linked list for storing the headers
     int i = 0;
     for(i = 0; i < allength; i++){
         theader->name = strdup(alheader[i]);
@@ -112,7 +116,8 @@ void *handleClient(void *client_void)
     
     int first = 0;
     http_request->content_length = 0;
-    while(recvLine(client->sockfd, buffer, 4000))
+    char buffer[8192];
+    while(recvLine(client->sockfd, buffer, 8192))
     {
         if(first == 0) {
             int uri_start = 0;
@@ -184,17 +189,25 @@ void *handleClient(void *client_void)
 
     if(http_request->request_type == 2){
         if(http_request->content_length < 8192){
+            int received = 0;            
             http_request->content_body = malloc(sizeof(char) * http_request->content_length);
-            //TODO: make sure everything is received
-            recv(client->sockfd, http_request->content_body, http_request->content_length, 0);
+            while(received < http_request->content_length){
+                received += recv(client->sockfd,
+                    (http_request->content_body + received),
+                    (http_request->content_length - received),
+                    0);
+
+            }
         }
     }
 
+    //Create creation date
     char buf[2000];
     time_t now = time(0);
     struct tm tm = *gmtime(&now);
     strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
 
+    //Parse first request string
     if(http_request->request_uri != NULL){
         unsigned int i;
         for(i = 0; i < strlen(http_request->request_uri); i++){
