@@ -31,15 +31,23 @@ int main()
 
 int server()
 {
+    //load Json configurations
+    if(loadConfig() < 0){
+        perror("Closing: error reading config files.");
+        return EXIT_FAILURE;
+    }
+
     int sock_server;
     //listen on the server port
-    sock_server = listenOn(SERVER_PORT);
+    if(sock_server = listenOn(SERVER_PORT) < 0){
+        perror("Closing: error binding to port");
+        return EXIT_FAILURE;
+    }
     //Create a pointer to keep the client in
     http_client_t *client_container;
     //Init the first client container
     client_container = initClientContainer();
-    //Init the first set of CGI vars
-    initCGI();
+
     //Accept clients
     while((client_container->sockfd 
         = acceptClient(sock_server, client_container->addr))) {
@@ -59,7 +67,19 @@ int server()
     return 0;
 }
 
+void loadConfig(){
+    const char *js;
+    int r;
+    jsmn_parser p;
+    jsmntok_t t[10];
 
+    js = "{}";
+    jsmn_init(&p);
+    r = jsmn_parse(&p, js, t, 10);
+    check(r == JSMN_SUCCESS);
+    check(t[0].type == JSMN_OBJECT);
+    check(t[0].start == 0 && t[0].end == 2);
+}
 
 void logError(int level, http_client_t * client, http_request_t * http_request)
 {

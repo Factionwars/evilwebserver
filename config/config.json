@@ -1,0 +1,17 @@
+{
+	//Server config
+	"server" : {
+		"port" : "1337",
+		"name" : "EvilTinyHTTPD",
+	},
+	//PHP config
+	"php" : {
+		"command" : "/usr/bin/php-cgi",
+		"method" : "CGI"
+	},
+	//Python command
+	"python" : {
+		"command" : "/usr/bin/python2",
+		"method" : "CGI"
+	}
+}

@@ -1,0 +1,7 @@
+{
+	"routes" : [
+		{"path" : "/", "module" : "php"},
+		{"path" : "/images", "module" : "assets"},
+		{"path" : "/django", "module" : "python"}
+	]
+}

@@ -1,9 +1,3 @@
-/** 
- *  @file   evilnetlib.c
- *  @brief  Networking library with a focus on HTTP
- *  @author Factionwars@evilzone.org
- *  @co-authors You and you
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +11,14 @@
 #include <netdb.h>
  
 #include "evilnetlib.h"
-
+//JSON parser library
+#include "jsmn/jsmn.h"
+/** 
+ *  @file   evilnetlib.c
+ *  @brief  Networking library with a focus on HTTP
+ *  @author Factionwars@evilzone.org
+ *  @co-authors You and you
+ */
 
 /**
  * @brief This function assigns a new client container
