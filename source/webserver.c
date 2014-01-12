@@ -90,6 +90,7 @@ void *handleClient(void *client_void)
 #if DEBUG
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 #endif
+
     //Init linked list struct
     http_request->headers = malloc(sizeof(struct http_header));
     struct http_header * theader;
