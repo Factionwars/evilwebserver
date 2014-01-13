@@ -21,6 +21,9 @@ typedef struct {
 config_server_t ** config_servers;
 config_module_t ** config_modules;
 
+int nservers; 
+int nmodules;
+
 int server();
 int loadConfig();
 void *handleClient(void *client_void);

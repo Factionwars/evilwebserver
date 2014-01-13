@@ -39,6 +39,7 @@ int server()
         perror("Closing: error reading config files.");
         return EXIT_FAILURE;
     }
+    printf("sex %s \n", config_modules[nmodules-1]->method);
     //return 0;
     int sock_server;
     //listen on the server port
