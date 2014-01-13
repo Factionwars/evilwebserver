@@ -39,7 +39,7 @@ int server()
         perror("Closing: error reading config files.");
         return EXIT_FAILURE;
     }
-    return 0;
+    //return 0;
     int sock_server;
     //listen on the server port
     if((sock_server = listenOn(SERVER_PORT)) < 0){
@@ -72,31 +72,22 @@ int server()
 
 int loadConfig(){
 
-    //json = "{\"server\":{\"port\" : \"1337\",\"name\" : \"EvilTinyHTTPD\" }}";
-
-    int file, length;
-    char * json;
-    if((file = open(DIR_CONFIG"config.json", O_RDONLY, 0)) == -1){
-        perror("Error opening config file");
-        return -1;
-    }
-
-    length = get_file_size(file);
-
-    if((json = malloc(length * sizeof(char) )) == NULL){
-        perror("Error allocating memory");
-        return -1;
-    }
-        
-    if(read(file, json, length) == -1){
+    //Read config file
+    char * json; /* Contents of json file */
+    json = readFile(DIR_CONFIG"config.json");
+    if(json == NULL){
         perror("Error reading config file");
         return -1;
     }
-    int r;
-    jsmn_parser parser;
-    jsmntok_t tokens[256];
 
-    jsmn_init(&parser);  
+    int r; /* Return value */
+    jsmn_parser parser; /* Parser */
+    jsmntok_t tokens[256]; /* Objects parsed from the json file */
+
+    //initialise the parser
+    jsmn_init(&parser);
+
+    //Parse the json string, returns jsmnerr_t
     r = jsmn_parse(&parser, json, tokens, 256);
     if(r != JSMN_SUCCESS){
         printf("%s\n", json);
@@ -122,12 +113,23 @@ int loadConfig(){
                 }
                 cparent = i;
 
-                config_servers = realloc(config_servers,
-                 (nservers + 1 * sizeof(config_server_t *)));
-                config_servers[nservers] = malloc(sizeof(config_server_t)); 
-                config_servers[nservers]->port = 0;
-                config_servers[nservers]->name = NULL;
-                nservers++;
+                if(strncasecmp(&json[tokens[i - 1].start], "server", 6) == 0){
+                    //Handle the server array
+                    config_servers = realloc(config_servers,
+                     (nservers + 1 * sizeof(config_server_t *)));
+                    config_servers[nservers] = malloc(sizeof(config_server_t)); 
+                    config_servers[nservers]->port = 0;
+                    config_servers[nservers]->name = NULL;
+                    nservers++;
+                } else if(strncasecmp(&json[tokens[i - 1].start], "modules", 7) == 0){
+                    //Handle the modules array
+
+                } else {
+                    //No handler for this type of array
+                    cparent = -1;
+                    i++;
+                    continue;
+                }
             }
         } else if(cparent == -1){
             i++;
@@ -160,8 +162,6 @@ int loadConfig(){
         i++;
     }
 
-    //check(t[0].type == JSMN_OBJECT);
-    //check(t[0].start == 0 && t[0].end == 2);
     return 0;
 }
 

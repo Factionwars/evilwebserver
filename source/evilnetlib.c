@@ -262,8 +262,8 @@ void initCGI()
 
 char ** addEnv(char ** envp, char * name, char * value, int * length)
 {
-    //BUG realoc sizeof char *
-    envp = realloc(envp, (*length + 1) * sizeof(char *));
+    //TODO: understand why the +2 instead of +1 makes it work
+    envp = realloc(envp,  sizeof(char *) * (*length + 2));
     if (envp == NULL) {
         perror("realloc");
         exit(EXIT_FAILURE);
@@ -275,7 +275,6 @@ char ** addEnv(char ** envp, char * name, char * value, int * length)
     }
     sprintf(vptr, "%s=%s", name, value);
     envp[*length] = vptr;
-    printf("insert at: %d string %s\n", (*length), vptr);   
     *length += 1;
     return envp;
 }
@@ -299,14 +298,8 @@ int sendPython(int sockfd, http_request_t* http_request)
 
 int sendCGI(int sockfd, http_request_t* http_request, char * command, char * script) 
 {
-    //LENGTH INCREMEATION IS FAULTY
-    //BODY enviroment free is faulty
-
     //Set environment variables
     char ** envp = NULL;
-    //envp = malloc(sizeof(char*));
-
-    //envp[0] = malloc(sizeof(char *));
 
     int envp_length = 0;
  
@@ -327,15 +320,9 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
         envp = addEnv(envp, "PATH_INFO", http_request->request_uri, &envp_length);
     if(http_request->request_query != NULL)
         envp = addEnv(envp, "QUERY_STRING", http_request->request_query, &envp_length);
-    //Remote ADDR Bugs
-    envp = addEnv(envp, "REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), &envp_length);
-    
-    envp = addEnv(envp, "SCRIPT_FILENAME", script, &envp_length);
 
-    //char * content_length = malloc(5);
-    //snprintf(content_length, 5, "%d",(int)strlen(http_request->request_uri));
-    //TODO: Add remote host
-    //setenv("REMOTE_HOST", inet_ntoa(client->addr->sin_addr));
+    envp = addEnv(envp, "REMOTE_ADDR", inet_ntoa(http_request->client->addr->sin_addr), &envp_length);    
+    envp = addEnv(envp, "SCRIPT_FILENAME", script, &envp_length);
     envp = addEnv(envp, "HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\0", &envp_length);
     envp = addEnv(envp, "CONTENT_TYPE", "application/x-www-form-urlencoded\0", &envp_length);
     envp = addEnv(envp, "GATEWAY_INTERFACE","CGI/1.1\0", &envp_length);
@@ -344,8 +331,7 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
     envp = addEnv(envp, "SERVER_PORT", SERVER_PORT_CGI, &envp_length);
     envp = addEnv(envp, "SERVER_SOFTWARE", SERVER_SOFTWARE, &envp_length);
 
-    //Argv list
-    char *argv[] = { command , script , 0 };
+    char *argv[] = { command , script , 0 }; /* Arg value array */
     //Close environment list
     envp = realloc(envp, (envp_length) * sizeof(envp[0]));
     envp[envp_length] = 0;
@@ -394,13 +380,12 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
         
         //Cleanup enviroment
         while(envp_length--){
-            printf("%d cleaning %s\n", envp_length, envp[envp_length]);
             free(envp[envp_length]);
         }
                              
-        //free(envp);
+        free(envp);
 
-        return 0;
+        return ret;
 
     } else {
         close(pipes[0]);
@@ -459,6 +444,31 @@ struct in_addr* lookUpHost(char * host)
             address = (struct in_addr *)(host_info->h_addr);
     }
     return address;
+}
+
+/**
+ * @brief Read a file into memory and returns a pointer to it
+ * @param char * filename
+ * @return char * ptr
+ */
+char * readFile(char * filename)
+{
+    int file, length;
+    char * ptr; /* Contents of json file */
+    if((file = open(filename, O_RDONLY, 0)) == -1){
+        return NULL;
+    }
+
+    length = get_file_size(file);
+
+    if((ptr = malloc(length * sizeof(char) )) == NULL){
+        return NULL;
+    }
+    //TODO: Make sure everything is read?
+    if(read(file, ptr, length) == -1){
+        return NULL;
+    }
+    return ptr;
 }
 
 /**

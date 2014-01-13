@@ -4,6 +4,7 @@
 #define EOL "\n"
 #define EOL_LENGTH 1
 #define BACKLOG 100
+
 #define PHP_COMMAND "/usr/bin/php-cgi"
 #define PHP_FILE "scripts/test.php"
 
@@ -59,6 +60,7 @@ int sendPHP(int sockfd, http_request_t* http_request);
 int sendPython(int sockfd, http_request_t* http_request);
 int recvLine(int sockfd, char *buffer, int max_size);
 int get_file_size(int fd);
+char * readFile(char * filename);
 
 struct in_addr* lookUpHost(char * host);
 #endif

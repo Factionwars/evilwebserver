@@ -9,6 +9,7 @@
 typedef struct {
 	int port;
 	char * name;
+	char * hostname;
 }config_server_t;
 
 typedef struct {
