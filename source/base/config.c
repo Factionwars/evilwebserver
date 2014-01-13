@@ -36,9 +36,9 @@ int loadConfig(){
 
     int cparent = -1;   /* current parent node */
     int nservers = 0;   /* number of server configs */
-    int nmodules = 0;
+    int nmodules = 0;   /* number of module configs */
     int i = 1;          /* array iterator */
-    int config = CONFIG_NONE; /* Current config array */    
+    int config = CONFIG_NONE; /* Current config array */
     jsmntok_t ctoken;   /* current token holder*/
 
     //The first token MUST be a object
@@ -49,41 +49,27 @@ int loadConfig(){
     while((ctoken = tokens[i]).end != 0){
         if(ctoken.type == JSMN_OBJECT){
             if(cparent == -1 || ctoken.start > tokens[cparent].end){
-                cparent = -1;   
+                //Seek for a new parent node
+                cparent = -1;
+                //If the array is unamed continue
                 if(tokens[i - 1].type != JSMN_STRING){
                     i++;
                     continue;
                 }
                 cparent = i;
-                if(config != CONFIG_SERVER 
-                    && strncasecmp(&json[tokens[i - 1].start], "servers", 6) == 0){
+                //Check for things we like
+                if(strncasecmp(&json[tokens[i - 1].start], "servers", 6) == 0){
                     config = CONFIG_SERVER;
-                } else if(config != CONFIG_MODULE 
-                    && strncasecmp(&json[tokens[i - 1].start], "modules", 7) == 0){
+                } else if(strncasecmp(&json[tokens[i - 1].start], "modules", 7) == 0){
                     config = CONFIG_MODULE;
-                    //Handle the modules array
-                }
-                if(config == CONFIG_SERVER){                    
-                    //Handle the server array
-                    config_servers = realloc(config_servers,
-                     (nservers + 1 * sizeof(config_server_t *)));
-                    config_servers[nservers] = malloc(sizeof(config_server_t)); 
-                    config_servers[nservers]->port = 0;
-                    config_servers[nservers]->name = NULL;
-                    nservers++;
-                } else if(config == CONFIG_MODULE){
-                   config_modules = realloc(config_modules,
-                    (nmodules + 1 * sizeof(config_module_t *)));
-                   config_modules[nmodules] = malloc(sizeof(config_module_t));
-                   config_modules[nmodules]->name = strndup(&json[tokens[i - 1].start],
-                    tokens[i - 1].end - tokens[i - 1].start);
-                   config_modules[nmodules]->command = NULL;
-                   config_modules[nmodules]->method = NULL;
-                   printf("%s\n", config_modules[nmodules]->name);
+                    i++;
+                } else {
+                    config = CONFIG_NONE;
+                    cparent = -1;
                 }
                 continue;
             } else {
-                if(config == CONFIG_SERVER){                    
+                if(config == CONFIG_SERVER){
                     //Handle the server array
                     config_servers = realloc(config_servers,
                      (nservers + 1 * sizeof(config_server_t *)));
@@ -99,19 +85,18 @@ int loadConfig(){
                     tokens[i - 1].end - tokens[i - 1].start);
                    config_modules[nmodules]->command = NULL;
                    config_modules[nmodules]->method = NULL;
-                   printf("%s\n", config_modules[nmodules]->name);
                 }
             }
         } else if(cparent == -1){
             i++;
             continue;
         }
-        
+        //If it's not a pair of strings "string":"string" we do not want it
+        //unless we want even more array depth
         if(ctoken.type != JSMN_STRING && tokens[i+1].type != JSMN_STRING || config == CONFIG_NONE){
             i++;
             continue;
         }
-
 
         //Process key(ctoken):val(vtoken) pair
         jsmntok_t vtoken = tokens[i+1];
