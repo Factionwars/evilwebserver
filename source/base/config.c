@@ -11,10 +11,23 @@
 #include "config.h"
 
 int loadConfig(){
+    int ret = 0;
+    
+    config_modules = NULL;
+    config_servers = NULL;
+    nservers = 0;   /* number of server configs */
+    nmodules = 0;   /* number of module configs */
+    
+    ret += parseConfig(DIR_CONFIG"config.json");
+    parseConfig(DIR_CONFIG"routes.json");
 
+    
+}
+
+int parseConfig(char * filename){
     //Read config file
     char * json; /* Contents of json file */
-    json = readFile(DIR_CONFIG"config.json");
+    json = readFile(filename);
     if(json == NULL){
         perror("Error reading config file");
         return -1;
@@ -34,12 +47,8 @@ int loadConfig(){
         return -1;
     }
 
-    config_modules = NULL;
-    config_servers = NULL;
-
     int cparent = -1;   /* current parent node */
-    nservers = 0;   /* number of server configs */
-    nmodules = 0;   /* number of module configs */
+
     int i = 1;          /* array iterator */
     int config = CONFIG_NONE; /* Current config array */
     jsmntok_t ctoken;   /* current token holder*/

@@ -18,8 +18,17 @@ typedef struct {
 	char * method;
 }config_module_t;
 
+typedef struct  route_node{
+	char * path;
+	int module;
+	char * option;
+	struct route_node * next;
+
+}route_node_t;
+
 config_server_t ** config_servers;
 config_module_t ** config_modules;
+
 
 int nservers; 
 int nmodules;

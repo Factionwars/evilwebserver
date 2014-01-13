@@ -1,7 +1,7 @@
 {
-	"routes" : [
-		{"path" : "/", "module" : "php"},
-		{"path" : "/images", "module" : "assets"},
-		{"path" : "/django", "module" : "python"}
-	]
+	"routes" : {
+		"route" : {"path" : "/", 		"module" : "php", 		"option" : "scripts/test.php" },
+		"route" : {"path" : "/images", 	"module" : "assets", 	"option" : "/assets"},
+		"route" : {"path" : "/python", 	"module" : "python", 	"option" : "scripts/cgi_test.py"}
+	}
 }
