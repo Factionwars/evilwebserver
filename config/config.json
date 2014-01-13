@@ -16,6 +16,6 @@
 		}
 	},
 	"security" : {
-		"dropuid" : "33"
+		"dropuid" : "0"
 	}
 }
