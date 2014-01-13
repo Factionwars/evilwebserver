@@ -7,8 +7,9 @@ all:
 	@cd ../../
 	@echo Building EvilWebserver
 
-	@$(CC) $(CFLAGS) source/webserver.c source/evilnetlib.c -o build/evilwebserver > build/build.log 2>&1
+	@$(CC) $(CFLAGS) source/webserver.c source/evilnetlib.c source/jsmn/libjsmn.a -o build/evilwebserver > build/build.log 2>&1
 	@cp scripts build/ -r
+	@cp config build/ -r
 	@echo Done! Output written to build/build.log
 clean:
 	@echo Removing build folder

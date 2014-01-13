@@ -11,8 +11,7 @@
 #include <netdb.h>
  
 #include "evilnetlib.h"
-//JSON parser library
-#include "jsmn/jsmn.h"
+
 /** 
  *  @file   evilnetlib.c
  *  @brief  Networking library with a focus on HTTP
@@ -233,7 +232,7 @@ int sendFile(int sockfd, char *file_name)
 
     sendString(sockfd, "\r\n");
 
-    if((ptr = malloc(length)) == NULL)
+    if((ptr = malloc(length * sizeof(char))) == NULL)
         return -1;
     bPtr = ptr;
     if(read(file, ptr, length) == -1)

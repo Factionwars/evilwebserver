@@ -1,17 +1,18 @@
 {
-	//Server config
-	"server" : {
-		"port" : "1337",
-		"name" : "EvilTinyHTTPD",
+	"servers" : {
+		"server" : {
+			"port" : "1337",
+			"name" : "EvilTinyHTTPD"
+		}
 	},
-	//PHP config
-	"php" : {
-		"command" : "/usr/bin/php-cgi",
-		"method" : "CGI"
-	},
-	//Python command
-	"python" : {
-		"command" : "/usr/bin/python2",
-		"method" : "CGI"
+	"modules" : {
+		"php" : {
+			"command" : "/usr/bin/php-cgi",
+			"method" : "CGI"
+		},
+		"python" : {
+			"command" : "/usr/bin/python2",
+			"method" : "CGI"
+		}
 	}
 }

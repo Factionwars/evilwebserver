@@ -18,7 +18,10 @@
 #include <unistd.h>
 #include <signal.h>
 
+//Net library
 #include "evilnetlib.h"
+ //JSON parser library
+#include "jsmn/jsmn.h"
 #include "webserver.h"
 
 long long requests = 0;
@@ -36,10 +39,10 @@ int server()
         perror("Closing: error reading config files.");
         return EXIT_FAILURE;
     }
-
+    return 0;
     int sock_server;
     //listen on the server port
-    if(sock_server = listenOn(SERVER_PORT) < 0){
+    if((sock_server = listenOn(SERVER_PORT)) < 0){
         perror("Closing: error binding to port");
         return EXIT_FAILURE;
     }
@@ -67,18 +70,99 @@ int server()
     return 0;
 }
 
-void loadConfig(){
-    const char *js;
-    int r;
-    jsmn_parser p;
-    jsmntok_t t[10];
+int loadConfig(){
 
-    js = "{}";
-    jsmn_init(&p);
-    r = jsmn_parse(&p, js, t, 10);
-    check(r == JSMN_SUCCESS);
-    check(t[0].type == JSMN_OBJECT);
-    check(t[0].start == 0 && t[0].end == 2);
+    //json = "{\"server\":{\"port\" : \"1337\",\"name\" : \"EvilTinyHTTPD\" }}";
+
+    int file, length;
+    char * json;
+    if((file = open(DIR_CONFIG"config.json", O_RDONLY, 0)) == -1){
+        perror("Error opening config file");
+        return -1;
+    }
+
+    length = get_file_size(file);
+
+    if((json = malloc(length * sizeof(char) )) == NULL){
+        perror("Error allocating memory");
+        return -1;
+    }
+        
+    if(read(file, json, length) == -1){
+        perror("Error reading config file");
+        return -1;
+    }
+    int r;
+    jsmn_parser parser;
+    jsmntok_t tokens[256];
+
+    jsmn_init(&parser);  
+    r = jsmn_parse(&parser, json, tokens, 256);
+    if(r != JSMN_SUCCESS){
+        printf("%s\n", json);
+        return -1;
+    }
+
+    int cparent = -1;   /* current parent node */
+    int nservers = 0;   /* number of server configs */
+    int i = 1;          /* array iterator */
+    jsmntok_t ctoken;   /* current token holder*/
+
+    //The first token MUST be a object
+    if(tokens[0].type != JSMN_OBJECT)
+        return -1;
+
+    //Servers config parser
+    while((ctoken = tokens[i]).end != 0){
+        if(ctoken.type == JSMN_OBJECT){
+            if(cparent == -1 || ctoken.start > tokens[cparent].end){
+                if(tokens[i - 1].type != JSMN_STRING){
+                    i++;
+                    continue;
+                }
+                cparent = i;
+
+                config_servers = realloc(config_servers,
+                 (nservers + 1 * sizeof(config_server_t *)));
+                config_servers[nservers] = malloc(sizeof(config_server_t)); 
+                config_servers[nservers]->port = 0;
+                config_servers[nservers]->name = NULL;
+                nservers++;
+            }
+        } else if(cparent == -1){
+            i++;
+            continue;
+        }
+        
+        if(ctoken.type != JSMN_STRING && tokens[i+1].type != JSMN_STRING){
+            i++;
+            continue;
+        }
+        //Current server to be configured
+        config_server_t *cserver = config_servers[nservers - 1];
+
+        //Process key(ctoken):val(vtoken) pair
+        jsmntok_t vtoken = tokens[i+1];
+
+        unsigned int length = vtoken.end - vtoken.start;
+        char value[length + 10];
+        memcpy(value, &json[vtoken.start], length);
+        value[length] = '\0';
+
+        if(strncasecmp(&json[ctoken.start], "port", 4) == 0){       
+            if((cserver->port = atoi(value)) > 65535 || cserver->port < 0){
+                perror("Invalid port number");
+                return -1;
+            }
+        } else if(strncasecmp(&json[ctoken.start], "name", 4) == 0){
+            cserver->name = strdup(value);
+        }
+        i++;
+    }
+
+    //check(t[0].type == JSMN_OBJECT);
+    //check(t[0].start == 0 && t[0].end == 2);
+    return 0;
 }
 
 void logError(int level, http_client_t * client, http_request_t * http_request)
