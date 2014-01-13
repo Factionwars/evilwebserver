@@ -20,9 +20,9 @@
 
 //Net library
 #include "evilnetlib.h"
- //JSON parser library
-#include "jsmn/jsmn.h"
+#include "config.h"
 #include "webserver.h"
+
 
 long long requests = 0;
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -67,101 +67,6 @@ int server()
     }
 
     close(sock_server);
-    return 0;
-}
-
-int loadConfig(){
-
-    //Read config file
-    char * json; /* Contents of json file */
-    json = readFile(DIR_CONFIG"config.json");
-    if(json == NULL){
-        perror("Error reading config file");
-        return -1;
-    }
-
-    int r; /* Return value */
-    jsmn_parser parser; /* Parser */
-    jsmntok_t tokens[256]; /* Objects parsed from the json file */
-
-    //initialise the parser
-    jsmn_init(&parser);
-
-    //Parse the json string, returns jsmnerr_t
-    r = jsmn_parse(&parser, json, tokens, 256);
-    if(r != JSMN_SUCCESS){
-        printf("%s\n", json);
-        return -1;
-    }
-
-    int cparent = -1;   /* current parent node */
-    int nservers = 0;   /* number of server configs */
-    int i = 1;          /* array iterator */
-    jsmntok_t ctoken;   /* current token holder*/
-
-    //The first token MUST be a object
-    if(tokens[0].type != JSMN_OBJECT)
-        return -1;
-
-    //Servers config parser
-    while((ctoken = tokens[i]).end != 0){
-        if(ctoken.type == JSMN_OBJECT){
-            if(cparent == -1 || ctoken.start > tokens[cparent].end){
-                if(tokens[i - 1].type != JSMN_STRING){
-                    i++;
-                    continue;
-                }
-                cparent = i;
-
-                if(strncasecmp(&json[tokens[i - 1].start], "server", 6) == 0){
-                    //Handle the server array
-                    config_servers = realloc(config_servers,
-                     (nservers + 1 * sizeof(config_server_t *)));
-                    config_servers[nservers] = malloc(sizeof(config_server_t)); 
-                    config_servers[nservers]->port = 0;
-                    config_servers[nservers]->name = NULL;
-                    nservers++;
-                } else if(strncasecmp(&json[tokens[i - 1].start], "modules", 7) == 0){
-                    //Handle the modules array
-
-                } else {
-                    //No handler for this type of array
-                    cparent = -1;
-                    i++;
-                    continue;
-                }
-            }
-        } else if(cparent == -1){
-            i++;
-            continue;
-        }
-        
-        if(ctoken.type != JSMN_STRING && tokens[i+1].type != JSMN_STRING){
-            i++;
-            continue;
-        }
-        //Current server to be configured
-        config_server_t *cserver = config_servers[nservers - 1];
-
-        //Process key(ctoken):val(vtoken) pair
-        jsmntok_t vtoken = tokens[i+1];
-
-        unsigned int length = vtoken.end - vtoken.start;
-        char value[length + 10];
-        memcpy(value, &json[vtoken.start], length);
-        value[length] = '\0';
-
-        if(strncasecmp(&json[ctoken.start], "port", 4) == 0){       
-            if((cserver->port = atoi(value)) > 65535 || cserver->port < 0){
-                perror("Invalid port number");
-                return -1;
-            }
-        } else if(strncasecmp(&json[ctoken.start], "name", 4) == 0){
-            cserver->name = strdup(value);
-        }
-        i++;
-    }
-
     return 0;
 }
 

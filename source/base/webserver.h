@@ -13,12 +13,13 @@ typedef struct {
 }config_server_t;
 
 typedef struct {
+	char * name;
 	char * command;
 	char * method;
 }config_module_t;
 
 config_server_t ** config_servers;
-config_server_t ** config_modules;
+config_module_t ** config_modules;
 
 int server();
 int loadConfig();
