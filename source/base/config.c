@@ -17,13 +17,13 @@ int loadConfig(){
     cleanConfig();
 
     ret += parseConfig(DIR_CONFIG"config.json");
+    
     parseConfig(DIR_CONFIG"routes.json");
 
     if(config_servers == NULL)
         return -1;
-    if(config_modules == NULL)
-        return -1;
-    return 0;
+
+    return ret;
 
 }
 
