@@ -58,7 +58,7 @@ void cleanConfig(){
                 free(config_routes->path);
             if(config_routes->option != NULL)
                 free(config_routes->option);
-            route_node_t * old;
+            route_node_t * old = config_routes;
             config_routes = config_routes->next;
             free(old);
         }
@@ -93,7 +93,7 @@ int parseConfig(char * filename){
     int i = 1;          /* array iterator */
     int config = CONFIG_NONE; /* Current config array */
     jsmntok_t ctoken;   /* current token holder*/
-    route_node_t * route; /* Current node */
+    route_node_t * route = NULL; /* Current node */
     //The first token MUST be a object
     if(tokens[0].type != JSMN_OBJECT)
         return -1;
@@ -157,7 +157,7 @@ int parseConfig(char * filename){
 
         //If it's not a pair of strings "string":"string" we do not want it
         //unless we want even more array depth
-        if(ctoken.type != JSMN_STRING && tokens[i+1].type != JSMN_STRING || config == CONFIG_NONE){
+        if(config == CONFIG_NONE || (ctoken.type != JSMN_STRING && tokens[i+1].type != JSMN_STRING)){
             i++;
             continue;
         }
@@ -194,9 +194,11 @@ int parseConfig(char * filename){
             }
         } else if(config == CONFIG_ROUTE) {
             if(strncasecmp(&json[ctoken.start], "path", 4) == 0){
-                route->path = strdup(value);
+                if(route != NULL)
+                    route->path = strdup(value);
             } else if(strncasecmp(&json[ctoken.start], "option", 6) == 0){
-                route->option = strdup(value);
+                if(route != NULL)
+                    route->option = strdup(value);
             }
         }
         i++;

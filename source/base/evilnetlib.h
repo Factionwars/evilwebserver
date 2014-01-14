@@ -19,7 +19,7 @@
 #define SERVER_PORT 1337
 #define SERVER_PORT_CGI "1337"
 #define SERVER_SOFTWARE "EvilWebserver v0.2"
-
+#include <netinet/in.h>
 typedef struct { 
     int sockfd;
     struct sockaddr_in * addr;
