@@ -1,3 +1,8 @@
+<form method="post">
+	<input type="text" name="username" placeholder="username">
+	<input type="password" name="password" placeholder="password">
+	<input type="submit" value="Send form!">
+</form>
 <?php
     echo 'PHP works evilguys<br/>';
     echo 'GET: '; var_dump($_GET);
