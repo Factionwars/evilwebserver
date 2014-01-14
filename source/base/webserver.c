@@ -61,6 +61,7 @@ int server()
                 NULL,
                 &handleClient,
                 (void *)client_container);
+        printf("meh");
         //Detach the client, from this point the thread will live it's own life
         pthread_detach( client_thread );
         //Create a new client container  for the next newcomer
@@ -97,7 +98,7 @@ void *handleClient(void *client_void)
     http_request->request_type  = 0;
     http_request->client = client;
 
-#if DEBUG
+#ifdef DEBUG
     printf("Got a connection from %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 #endif
 
@@ -192,7 +193,7 @@ void *handleClient(void *client_void)
                 theader = theader->next;
             }
         }
-#if DEBUG        
+#ifdef DEBUG        
         printf("received: %s\n", buffer);
 #endif
         if(buffer[0] == '\xd')
@@ -240,8 +241,8 @@ void *handleClient(void *client_void)
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);            
 
-            sendFile(client->sockfd, "html/index.html");
-            //sendPHP(client->sockfd, http_request);
+            //sendFile(client->sockfd, "scripts/index.html");
+            sendPHP(client->sockfd, http_request);
             //sendPython(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
@@ -255,7 +256,7 @@ void *handleClient(void *client_void)
         sendHeader(client->sockfd, "Server", SERVER_NAME);
         sendHeader(client->sockfd, "Date", buf);
     }
-#if DEBUG
+#ifdef DEBUG
     printf("Closing connection to %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
 #endif
     cleanUpClient(client, http_request);

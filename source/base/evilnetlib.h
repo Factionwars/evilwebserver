@@ -3,7 +3,7 @@
 
 #define EOL "\n"
 #define EOL_LENGTH 1
-#define BACKLOG 10000
+#define BACKLOG 1023
 
 #define PHP_COMMAND "/usr/bin/php-cgi"
 #define PHP_FILE "scripts/test.php"
