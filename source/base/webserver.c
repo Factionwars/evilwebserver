@@ -192,8 +192,9 @@ void *handleClient(void *client_void)
                 theader = theader->next;
             }
         }
+#if DEBUG        
         printf("received: %s\n", buffer);
-
+#endif
         if(buffer[0] == '\xd')
             break;
     }
@@ -239,8 +240,8 @@ void *handleClient(void *client_void)
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);            
 
-            //sendFile(client->sockfd, "html/index.html");
-            sendPHP(client->sockfd, http_request);
+            sendFile(client->sockfd, "html/index.html");
+            //sendPHP(client->sockfd, http_request);
             //sendPython(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
@@ -254,9 +255,9 @@ void *handleClient(void *client_void)
         sendHeader(client->sockfd, "Server", SERVER_NAME);
         sendHeader(client->sockfd, "Date", buf);
     }
-
+#if DEBUG
     printf("Closing connection to %s on port %d\n", inet_ntoa(client->addr->sin_addr), ntohs(client->addr->sin_port));
-
+#endif
     cleanUpClient(client, http_request);
 
 
