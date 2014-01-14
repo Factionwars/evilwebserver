@@ -13,15 +13,55 @@
 int loadConfig(){
     int ret = 0;
     
+    cleanConfig();
+
+    ret += parseConfig(DIR_CONFIG"config.json");
+    parseConfig(DIR_CONFIG"routes.json");
+
+    if(config_servers == NULL)
+        return -1;
+    if(config_modules == NULL)
+        return -1;
+    return 0;
+
+}
+
+route_node_t * addRouteNode(){
+    route_node_t * bptr; /* Backup node */
+    route_node_t * nptr; /* Last node */
+    bptr = config_routes;
+    if(config_routes != NULL){
+        while(config_routes != NULL)
+            config_routes = config_routes->next;    
+    }
+
+    config_routes = malloc(sizeof(route_node_t));
+    config_routes->path = NULL;
+    config_routes->option = NULL;
+    nptr = config_routes;
+    if(bptr != NULL)
+        config_routes = bptr;
+    return nptr;
+    
+}
+
+void cleanConfig(){
     config_modules = NULL;
     config_servers = NULL;
     nservers = 0;   /* number of server configs */
     nmodules = 0;   /* number of module configs */
-    
-    ret += parseConfig(DIR_CONFIG"config.json");
-    parseConfig(DIR_CONFIG"routes.json");
 
-    
+    if(config_routes != NULL){
+        while(config_routes != NULL){
+            if(config_routes->path != NULL)
+                free(config_routes->path);
+            if(config_routes->option != NULL)
+                free(config_routes->option);
+            route_node_t * old;
+            config_routes = config_routes->next;
+            free(old);
+        }
+    } 
 }
 
 int parseConfig(char * filename){
@@ -52,7 +92,7 @@ int parseConfig(char * filename){
     int i = 1;          /* array iterator */
     int config = CONFIG_NONE; /* Current config array */
     jsmntok_t ctoken;   /* current token holder*/
-
+    route_node_t * route; /* Current node */
     //The first token MUST be a object
     if(tokens[0].type != JSMN_OBJECT)
         return -1;
@@ -74,6 +114,9 @@ int parseConfig(char * filename){
                     config = CONFIG_SERVER;
                 } else if(strncasecmp(&json[tokens[i - 1].start], "modules", 7) == 0){
                     config = CONFIG_MODULE;
+                    i++;
+                } else if(strncasecmp(&json[tokens[i - 1].start], "routes", 6) == 0){
+                    config = CONFIG_ROUTE;
                     i++;
                 } else {
                     config = CONFIG_NONE;
@@ -100,6 +143,8 @@ int parseConfig(char * filename){
                     config_modules[nmodules]->command = NULL;
                     config_modules[nmodules]->method = NULL;
                     nmodules++;
+                } else if(config == CONFIG_ROUTE) {
+                    route = addRouteNode();
                 }
             }
         } else if(cparent == -1){
@@ -141,6 +186,12 @@ int parseConfig(char * filename){
 
             } else if(strncasecmp(&json[ctoken.start], "method", 6) == 0){
                 config_modules[nmodules - 1]->method = strdup(value);               
+            }
+        } else if(config == CONFIG_ROUTE) {
+            if(strncasecmp(&json[ctoken.start], "path", 4) == 0){
+                route->path = strdup(value);
+            } else if(strncasecmp(&json[ctoken.start], "option", 6) == 0){
+                route->option = strdup(value);
             }
         }
         i++;

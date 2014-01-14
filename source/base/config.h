@@ -1,12 +1,16 @@
 #ifndef CONFIG_HEADER
 #define CONFIG_HEADER
 
-int loadConfig();
+
 
 enum config {
 	CONFIG_NONE,
 	CONFIG_SERVER,
-	CONFIG_MODULE
+	CONFIG_MODULE,
+	CONFIG_ROUTE
 };
+
+int loadConfig();
+void cleanConfig();
 
 #endif

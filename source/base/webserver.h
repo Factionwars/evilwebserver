@@ -23,12 +23,11 @@ typedef struct  route_node{
 	int module;
 	char * option;
 	struct route_node * next;
-
 }route_node_t;
 
 config_server_t ** config_servers;
 config_module_t ** config_modules;
-
+route_node_t * config_routes;
 
 int nservers; 
 int nmodules;
