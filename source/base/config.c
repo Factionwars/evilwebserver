@@ -47,6 +47,24 @@ route_node_t * addRouteNode(){
 }
 
 void cleanConfig(){
+
+    if(nservers > 0 && config_servers != NULL){
+        int i;       
+        for(i = 0; i > nservers; i++){
+            if(config_servers[i] != NULL)
+                free(config_servers[i]);
+        }
+        free(config_servers);
+    }
+    if(nmodules > 0 && config_modules != NULL){
+        int i;
+        for(i = 0; i > nmodules; i++){
+            if(config_modules[i] != NULL)
+                free(config_modules[i]);
+        }
+        free(config_modules);
+    }
+
     config_modules = NULL;
     config_servers = NULL;
     nservers = 0;   /* number of server configs */
@@ -62,7 +80,8 @@ void cleanConfig(){
             config_routes = config_routes->next;
             free(old);
         }
-    } 
+        config_routes = NULL;
+    }
 }
 
 int parseConfig(char * filename){
@@ -80,14 +99,13 @@ int parseConfig(char * filename){
 
     //initialise the parser
     jsmn_init(&parser);
-
     //Parse the json string, returns jsmnerr_t
     r = jsmn_parse(&parser, json, tokens, 256);
     if(r != JSMN_SUCCESS){
-        printf("%s\n", json);
+        free(json);
+        //printf("%s\n", filename);
         return -1;
     }
-
     int cparent = -1;   /* current parent node */
 
     int i = 1;          /* array iterator */
@@ -203,6 +221,6 @@ int parseConfig(char * filename){
         }
         i++;
     }
-
+    free(json);
     return 0;
 }
