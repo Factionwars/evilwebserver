@@ -1,10 +1,3 @@
-/** 
- *  @file   webserver.c
- *  @brief  HTTP webserver based on evilnetlib library
- *  @author Factionwars@evilzone.org
- *  @co-authors You and you
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +15,13 @@
 #include "evilnetlib.h"
 #include "config.h"
 #include "webserver.h"
+
+/** 
+ *  @file   webserver.c
+ *  @brief  HTTP webserver based on evilnetlib library
+ *  @author Factionwars@evilzone.org
+ *  @co-authors You and you
+ */
 
 
 long long requests = 0;
@@ -240,8 +240,8 @@ void *handleClient(void *client_void)
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);            
 
-            sendFile(client->sockfd, "scripts/index.html");
-            //sendPHP(client->sockfd, http_request);
+            //sendFile(client->sockfd, "scripts/index.html");
+            sendPHP(client->sockfd, http_request);
             //sendPython(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
