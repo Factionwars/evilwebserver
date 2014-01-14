@@ -13,6 +13,7 @@
 int loadConfig(){
     int ret = 0;
     
+    //Clean all the old values out
     cleanConfig();
 
     ret += parseConfig(DIR_CONFIG"config.json");
@@ -109,7 +110,8 @@ int parseConfig(char * filename){
                     continue;
                 }
                 cparent = i;
-                //Check for things we like
+                //Check for a main config array, if found we set
+                // the current mode to that array
                 if(strncasecmp(&json[tokens[i - 1].start], "servers", 6) == 0){
                     config = CONFIG_SERVER;
                 } else if(strncasecmp(&json[tokens[i - 1].start], "modules", 7) == 0){
@@ -125,6 +127,7 @@ int parseConfig(char * filename){
                 }
                 continue;
             } else {
+                //Check for a sub-array, this can be for example a server or a module
                 if(config == CONFIG_SERVER){
                     //Set up the server array
                     config_servers = realloc(config_servers,
@@ -158,6 +161,8 @@ int parseConfig(char * filename){
             i++;
             continue;
         }
+
+        //Here we process the values in a sub-array
 
         //Process key(ctoken):val(vtoken) pair
         jsmntok_t vtoken = tokens[i+1];
