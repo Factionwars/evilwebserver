@@ -128,7 +128,7 @@ void *handleClient(void *client_void)
     int first = 0;
     http_request->content_length = 0;
     char buffer[MAX_HEADER_LENGTH];
-    while(recvLine(client->sockfd, buffer, MAX_HEADER_LENGTH))
+    while(getLine(client->sockfd, buffer))
     {
         if(first == 0) {
             int uri_start = 0;
@@ -240,8 +240,8 @@ void *handleClient(void *client_void)
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);            
 
-            //sendFile(client->sockfd, "scripts/index.html");
-            sendPHP(client->sockfd, http_request);
+            sendFile(client->sockfd, "scripts/index.html");
+            //sendPHP(client->sockfd, http_request);
             //sendPython(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
@@ -260,10 +260,11 @@ void *handleClient(void *client_void)
 #endif
     cleanUpClient(client, http_request);
 
-
+    /*
     pthread_mutex_lock(&count_mutex);
     requests++;
     pthread_mutex_unlock(&count_mutex);
+    */
     pthread_exit(0);
 }
 

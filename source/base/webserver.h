@@ -2,7 +2,7 @@
 #define SERVER_HEADER
 
 /* Basic webserver configuration */
-#define DEBUG true
+
 #define DIR_CONFIG "config/"
 
 /* File defines*/

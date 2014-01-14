@@ -415,11 +415,11 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
  * @param max_size max line size, do not exceed buffer size
  * @return line length or negative on failure
  */
-int recvLine(int sockfd, char *buffer, int max_size) 
+int getLine(int sockfd, char *buffer) 
 {
-    static char line_buffer[MAX_HEADER_LENGTH] = {0};
-    static int buffered = 0;
-    static int line_pos = 0;
+    static char __thread line_buffer[MAX_HEADER_LENGTH] = {0};
+    static int __thread  buffered = 0;
+    static int __thread  line_pos = 0;
     const int max = MAX_HEADER_LENGTH;
 
     int buffer_pos = 0;
@@ -432,6 +432,9 @@ int recvLine(int sockfd, char *buffer, int max_size)
             buffered = 0;        
         }
         buffered = recv(sockfd, line_buffer, max, 0);
+        if(buffered == 0){
+            return 0;
+        }
         //error checking on recv
         line_pos = 0;
         line_end = memchr(&line_buffer[line_pos], '\n', max - line_pos);
@@ -439,8 +442,9 @@ int recvLine(int sockfd, char *buffer, int max_size)
         if(line_end == NULL){
             //Howdoe!
             buffered = 0;
-            strncpy(buffer + buffer_pos, &line_buffer[0], max);
-            printf("howdoe\n");
+            line_pos = 0;
+            strncpy(buffer + buffer_pos, &line_buffer[0], max - buffer_pos);
+            
         }
 
     } 
@@ -453,7 +457,10 @@ int recvLine(int sockfd, char *buffer, int max_size)
     buffer[line_length] = '\0';
 
     return strlen(buffer);
-    /*
+
+}
+
+int oldRecv(int sockfd, char *buffer, int max_size) {
     //Build a buffer system from wich the lines are extracted
     char *ptr = buffer;
     while(recv(sockfd, ptr, 1, 0) == 1 && (ptr - buffer) <= (max_size / 2) ){
@@ -464,8 +471,6 @@ int recvLine(int sockfd, char *buffer, int max_size)
     }
     *(ptr) = '\0';
     return strlen(buffer);
-    */
-    return 1;
 }
 
 /**
