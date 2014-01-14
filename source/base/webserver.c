@@ -61,7 +61,6 @@ int server()
                 NULL,
                 &handleClient,
                 (void *)client_container);
-        printf("meh");
         //Detach the client, from this point the thread will live it's own life
         pthread_detach( client_thread );
         //Create a new client container  for the next newcomer
@@ -128,8 +127,8 @@ void *handleClient(void *client_void)
     
     int first = 0;
     http_request->content_length = 0;
-    char buffer[8192];
-    while(recvLine(client->sockfd, buffer, 8192))
+    char buffer[MAX_HEADER_LENGTH];
+    while(recvLine(client->sockfd, buffer, MAX_HEADER_LENGTH))
     {
         if(first == 0) {
             int uri_start = 0;
@@ -184,8 +183,8 @@ void *handleClient(void *client_void)
                     //Check for the content-length header
                     if(strcasecmp(theader->name, "Content-Length") == 0){
                         http_request->content_length = atoi(theader->value);
-                        if(http_request->content_length > 8192)
-                            http_request->content_length = 8192;
+                        if(http_request->content_length > MAX_HEADER_LENGTH)
+                            http_request->content_length = MAX_HEADER_LENGTH;
                         if(http_request->content_length < 0)
                             http_request->content_length = 0;
                     }
@@ -201,7 +200,7 @@ void *handleClient(void *client_void)
     }
 
     if(http_request->request_type == 2){
-        if(http_request->content_length < 8192){
+        if(http_request->content_length < MAX_HEADER_LENGTH){
             int received = 0;            
             http_request->content_body = malloc(sizeof(char) * http_request->content_length);
             while(received < http_request->content_length){
