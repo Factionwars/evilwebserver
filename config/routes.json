@@ -1,7 +1,9 @@
 {
 	"routes" : {
-		"route1" : {"path" : "/", 		"module" : "php", 		"option" : "scripts/test.php" },
-		"route2" : {"path" : "/images", 	"module" : "assets", 	"option" : "/assets"},
-		"route3" : {"path" : "/python", 	"module" : "python", 	"option" : "scripts/cgi_test.py"}
+		"evilzone" :{
+			"route1" : {"path" : "/", "module" : "php", 		"option" : "scripts/test.php" },
+			"route2" : {"path" : "/images", "module" : "assets", 	"option" : "/assets"},
+			"route3" : {"path" : "/python", "module" : "python", 	"option" : "scripts/cgi_test.py"}
+		}
 	}
 }

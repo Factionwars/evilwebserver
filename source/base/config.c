@@ -165,6 +165,8 @@ int parseConfig(char * filename){
                     config_modules[nmodules]->method = NULL;
                     nmodules++;
                 } else if(config == CONFIG_ROUTE) {
+                    //printf("node %s\n", &json[tokens[i-1].start]);
+                    cparent = i - 1;
                     route = addRouteNode();
                 }
             }

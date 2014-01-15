@@ -1,6 +1,6 @@
 {
 	"servers" : {
-		"server" : {
+		"evilzone" : {
 			"port" : "1337",
 			"name" : "EvilTinyHTTPD"
 		}
