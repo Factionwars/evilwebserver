@@ -8,7 +8,7 @@ Python programmer: Phage
 Phase: Pre-Alpha
 
 ### IDEAS/TODO:
-1. Complete PHP-CGI support
+1. Complete PHP-CGI support -- DONE
 2. Add Python Support
 3. Create a RESTapi like API for rapid app development/
 on HTTP level
