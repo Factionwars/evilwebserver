@@ -1,4 +1,5 @@
 # You can put your build options here
+CFLAGS=-m32
 -include config.mk
 
 all: libjsmn.a 

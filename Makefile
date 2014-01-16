@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-pthread -ggdb -O -Wall -Wextra 
+CFLAGS=-pthread -ggdb -O -Wall -Wextra -m32
 all:
 	@mkdir build -p
 	@echo Building jsmn Json Library
