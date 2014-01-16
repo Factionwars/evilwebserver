@@ -237,8 +237,8 @@ void *handleClient(void *client_void)
     {        
         if(http_request->request_uri != NULL) {
             sendString(client->sockfd, "HTTP/1.1 200 OK\r\n");
-            //sendHeader(client->sockfd, "Server", SERVER_NAME);
-            //sendHeader(client->sockfd, "Date", buf);            
+            sendHeader(client->sockfd, "Server", SERVER_NAME);
+            sendHeader(client->sockfd, "Date", buf);            
 
             //sendFile(client->sockfd, "scripts/index.html");
             sendPHP(client->sockfd, http_request);
