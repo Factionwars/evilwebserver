@@ -9,37 +9,45 @@
 indexnode_t * list_init()
 {
 	indexnode_t * indexnode = object_init(sizeof(indexnode_t));
+	indexnode->type = NODE_INDEX;
 	return indexnode;
 }
 
-
-indexnode_t * list_add(indexnode_t * indexnode)
+void * list_add(void * node)
 {
-	indexnode->last = list_add(indexnode->last);
-}
-
-objectnode_t * list_add(objectnode_t * objectnode)
-{
-	while(objectnode->next != NULL){
-		objectnode = objectnode->next;
+	typenode_t * typenode = node;
+	if(typenode->type == NODE_INDEX){
+		indexnode_t * indexnode = node;
+		indexnode->last = list_add(indexnode->last);
+		return indexnode;
+	} else if(typenode->type == NODE_OBJECT){
+		objectnode_t * objectnode = node;
+		while(objectnode->next != NULL){
+			objectnode = objectnode->next;
+		}
+		objectnode->next = object_init(sizeof(objectnode_t));
+		objectnode->next->type = NODE_OBJECT;
+		return objectnode;		
 	}
-	objectnode->next = object_init(sizeof(objectnode_t));
-	return objectnode;
+
 }
 
-void list_delete(indexnode_t * indexnode)
-{
-	if(indexnode == NULL)
-		return;
-	list_delete(indexnode->first);
-	free(indexnode);
-}
-
-void list_delete(objectnode_t * objectnode)
-{
-	while(objectnode != NULL){
-		objectnode_t * previous = objectnode;
-		objectnode = objectnode->next;
-		free(previous);
+void list_delete(void * node)
+{	
+	typenode_t * typenode = node;
+	if(typenode->type == NODE_INDEX){
+		indexnode_t * indexnode = node;
+		if(indexnode == NULL)
+			return;
+		list_delete(indexnode->first);
+		free(indexnode);
+	} else if(typenode->type == NODE_OBJECT){
+		objectnode_t * objectnode = node;
+		while(objectnode != NULL){
+			objectnode_t * previous = objectnode;
+			objectnode = objectnode->next;
+			free(previous);
+		}
 	}
+
 }
