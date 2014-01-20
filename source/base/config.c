@@ -6,6 +6,7 @@
 #include <string.h>
  //JSON parser library
 #include "../libraries/jsmn/jsmn.h"
+#include "../libraries/objectivity/object.h"
 #include "webserver.h"
 #include "evilnetlib.h"
 #include "config.h"
@@ -36,9 +37,8 @@ route_node_t * addRouteNode(){
             config_routes = config_routes->next;    
     }
 
-    config_routes = malloc(sizeof(route_node_t));
-    config_routes->path = NULL;
-    config_routes->option = NULL;
+    config_routes = object_init(sizeof(route_node_t));
+
     nptr = config_routes;
     if(bptr != NULL)
         config_routes = bptr;
@@ -52,17 +52,17 @@ void cleanConfig(){
         int i;       
         for(i = 0; i > nservers; i++){
             if(config_servers[i] != NULL)
-                free(config_servers[i]);
+                object_delete(config_servers[i]);
         }
-        free(config_servers);
+        object_delete(config_servers);
     }
     if(nmodules > 0 && config_modules != NULL){
         int i;
         for(i = 0; i > nmodules; i++){
             if(config_modules[i] != NULL)
-                free(config_modules[i]);
+                object_delete(config_modules[i]);
         }
-        free(config_modules);
+        object_delete(config_modules);
     }
 
     config_modules = NULL;
@@ -73,12 +73,12 @@ void cleanConfig(){
     if(config_routes != NULL){
         while(config_routes != NULL){
             if(config_routes->path != NULL)
-                free(config_routes->path);
+                object_delete(config_routes->path);
             if(config_routes->option != NULL)
-                free(config_routes->option);
+                object_delete(config_routes->option);
             route_node_t * old = config_routes;
             config_routes = config_routes->next;
-            free(old);
+            object_delete(old);
         }
         config_routes = NULL;
     }
@@ -102,7 +102,7 @@ int parseConfig(char * filename){
     //Parse the json string, returns jsmnerr_t
     r = jsmn_parse(&parser, json, tokens, 256);
     if(r != JSMN_SUCCESS){
-        free(json);
+        object_delete(json);
         //printf("%s\n", filename);
         return -1;
     }
@@ -150,7 +150,7 @@ int parseConfig(char * filename){
                     //Set up the server array
                     config_servers = realloc(config_servers,
                         (nservers + 1 * sizeof(config_server_t *)));
-                    config_servers[nservers] = malloc(sizeof(config_server_t)); 
+                    config_servers[nservers] = object_init(sizeof(config_server_t)); 
                     config_servers[nservers]->port = 0;
                     config_servers[nservers]->name = NULL;
                     nservers++;
@@ -158,7 +158,7 @@ int parseConfig(char * filename){
                     //set up the modules array
                     config_modules = realloc(config_modules,
                         (nmodules + 1 * sizeof(config_module_t *)));
-                    config_modules[nmodules] = malloc(sizeof(config_module_t));
+                    config_modules[nmodules] = object_init(sizeof(config_module_t));
                         config_modules[nmodules]->name = strndup(&json[tokens[i - 1].start],
                     tokens[i - 1].end - tokens[i - 1].start);
                     config_modules[nmodules]->command = NULL;
