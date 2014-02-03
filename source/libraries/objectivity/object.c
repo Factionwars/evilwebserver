@@ -4,9 +4,19 @@
 
 #include "object.h"
 
+void * object_ninit(size_t size)
+{
+	object_t* new_object = malloc(size);
+	if(new_object == NULL){
+		perror("Error allocating memory.");
+		return NULL;
+	}
 
-/* OBJECT.c */
-void * object_init(int size){
+	return new_object;
+}
+
+void * object_init(size_t size)
+{
 	object_t* new_object = malloc(size);
 	if(new_object == NULL){
 		perror("Error allocating memory.");
@@ -16,22 +26,11 @@ void * object_init(int size){
 	return new_object;
 }
 
-void * object_delete(object_t* objected){
+void * object_delete(object_t* objected)
+{
 	if(objected == NULL)
 		return NULL;
 	free(objected);
 	objected = NULL;
 	return NULL;
 }
-
-/*
-
-int main() {
-	http_header * header = object_init(sizeof(http_header));
-
-	header->name = "hoi";
-	printf("lol: %s\n", header->name);
-	object_delete(header);
-	return 0;
-} 
-*/

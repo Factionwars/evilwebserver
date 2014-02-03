@@ -33,8 +33,9 @@ route_node_t * addRouteNode(){
     route_node_t * nptr; /* Last node */
     bptr = config_routes;
     if(config_routes != NULL){
-        while(config_routes != NULL)
-            config_routes = config_routes->next;    
+        while(config_routes != NULL){
+            config_routes = config_routes->next;
+        }  
     }
 
     config_routes = object_init(sizeof(route_node_t));

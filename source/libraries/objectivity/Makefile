@@ -1,5 +1,5 @@
 # You can put your build options here
-CFLAGS=-m32
+
 
 all: objectivity.a 
 

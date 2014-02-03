@@ -1,8 +1,6 @@
 #ifndef CONFIG_HEADER
 #define CONFIG_HEADER
 
-
-
 enum config {
 	CONFIG_NONE,
 	CONFIG_SERVER,

@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-pthread -ggdb -O -Wall -Wextra -m32
+CFLAGS=-pthread -ggdb -O -Wall -Wextra 
 all:
 	@mkdir build -p
 	@echo Building libraries
