@@ -56,6 +56,7 @@ int acceptClient(int sockfd, struct sockaddr_in* client_addr);
 int sendString(int sockfd, char *buffer);
 int sendHeader(int sockfd, char *message, char *value);
 int sendFile(int sockfd, char *file_name);
+int getLine(int sockfd, char *buffer);
 
 char ** addEnv(char ** envp, char * name, char * value, int * length);
 int sendCGI(int sockfd, http_request_t* http_request, char * command, char * script);

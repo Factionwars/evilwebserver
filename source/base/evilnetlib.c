@@ -14,6 +14,7 @@
 
 //Cgi function
 #include "cgi.c"
+#include "headers/object.h"
 
 /** 
  *  @file   evilnetlib.c
@@ -30,7 +31,8 @@ http_client_t * initClientContainer()
 {
     http_client_t *client_container;
     client_container = object_init(sizeof(http_client_t));
-    client_container->addr = object_init(sizeof(struct sockaddr_in));
+    client_container->addr = object_ninit(sizeof(struct sockaddr_in));
+    client_container->sockfd = 0;
     return client_container;
 }
 

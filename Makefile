@@ -8,6 +8,8 @@ all:
 	@make -C source/libraries/objectivity > build/build.log 2>&1
 	@cd ../../
 	@echo Building EvilWebserver
+	@mkdir source/base/headers -p
+	@cp source/libraries/objectivity/*.h source/base/headers/
 
 	@$(CC) $(CFLAGS) source/base/webserver.c \
 	 source/base/evilnetlib.c \

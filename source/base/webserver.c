@@ -15,6 +15,7 @@
 #include "evilnetlib.h"
 #include "config.h"
 #include "webserver.h"
+#include "headers/object.h"
 
 /** 
  *  @file   webserver.c
@@ -39,13 +40,36 @@ int server()
         perror("Closing: error reading config files.");
         return EXIT_FAILURE;
     }
+    
+    pthread_t * servers[nservers];
 
-    int sock_server;
-    //listen on the server port
-    if((sock_server = listenOn(SERVER_PORT)) < 0){
-        perror("Closing: error binding to port");
-        return EXIT_FAILURE;
+    //set up the servers per port
+    int i;
+    for(i=0; i < nservers; ++i){
+        printf("Creating server on port %d\n", config_servers[i]->port);
+        if((config_servers[i]->sockfd =
+                    listenOn(config_servers[i]->port)) < 0){
+            perror("Failed binding on server port");        
+        }
+        pthread_t server_thread;
+        pthread_create( &server_thread,
+                NULL,
+                &serverLoop,
+                (void *)config_servers[i]);
+        //Release pickachu into the wild wild west
+        pthread_detach(server_thread);
+        servers[i] = &server_thread;
     }
+    for(i=0; i < nservers; ++i){
+        pthread_join((*servers[i]), NULL);
+
+    } 
+    return 0;
+}
+
+void * serverLoop(void * config_void)
+{
+    config_server_t * config_server = config_void;
     //Create a pointer to keep the client in
     http_client_t *client_container;
     //Init the first client container
@@ -53,7 +77,7 @@ int server()
 
     //Accept clients
     while((client_container->sockfd 
-        = acceptClient(sock_server, client_container->addr))) {
+        = acceptClient(config_server->port, client_container->addr))) {
         //Create a new thread to assign to the new client
         pthread_t client_thread;
         pthread_create( &client_thread,
@@ -66,8 +90,9 @@ int server()
         client_container = initClientContainer();
     }
 
-    close(sock_server);
+    close(config_server->port);
     return 0;
+
 }
 
 void logError(int level, http_client_t * client, http_request_t * http_request)
@@ -238,7 +263,8 @@ void *handleClient(void *client_void)
             sendString(client->sockfd, "HTTP/1.1 200 OK\r\n");
             sendHeader(client->sockfd, "Server", SERVER_NAME);
             sendHeader(client->sockfd, "Date", buf);            
-
+            //Here you can choose which method to respond with
+            //TODO: Implement a routing system
             //sendFile(client->sockfd, "scripts/index.html");
             sendPHP(client->sockfd, http_request);
             //sendPython(client->sockfd, http_request);

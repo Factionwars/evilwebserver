@@ -7,6 +7,7 @@
 
 /* File defines*/
 typedef struct {
+        int sockfd;
 	int port;
 	char * name;
 	char * hostname;
@@ -34,6 +35,7 @@ int nmodules;
 
 int server();
 int loadConfig();
+void *serverLoop(void *config_void);
 void *handleClient(void *client_void);
 
 #endif
