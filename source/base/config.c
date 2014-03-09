@@ -151,7 +151,7 @@ int parseConfig(char * filename){
                     //Set up the server array
                     config_servers = realloc(config_servers,
                         (nservers + 1 * sizeof(config_server_t *)));
-                    config_servers[nservers] = object_init(sizeof(config_server_t)); 
+                    config_servers[nservers] = object_ninit(sizeof(config_server_t)); 
                     config_servers[nservers]->port = 0;
                     config_servers[nservers]->name = NULL;
                     nservers++;
@@ -159,19 +159,19 @@ int parseConfig(char * filename){
                     //set up the modules array
                     config_modules = realloc(config_modules,
                         (nmodules + 1 * sizeof(config_module_t *)));
-                    config_modules[nmodules] = object_init(sizeof(config_module_t));
+                    config_modules[nmodules] = object_ninit(sizeof(config_module_t));
                         config_modules[nmodules]->name = strndup(&json[tokens[i - 1].start],
                     tokens[i - 1].end - tokens[i - 1].start);
                     config_modules[nmodules]->command = NULL;
                     config_modules[nmodules]->method = NULL;
                     nmodules++;
                 } else if(config == CONFIG_ROUTE) {
-                    //printf("node %s\n", &json[tokens[i-1].start]);
                     cparent = i - 1;
                     route = addRouteNode();
                 }
             }
-        } else if(cparent == -1){
+        } else if(cparent == -1 || ctoken.start > tokens[cparent].end){
+            cparent == -1;
             i++;
             continue;
         }
@@ -196,7 +196,9 @@ int parseConfig(char * filename){
 
         if(config == CONFIG_SERVER){
             //Current server to be configured
+            printf("value %s\n", value);
             config_server_t *cserver = config_servers[nservers - 1];    
+            printf("num servers %d\n", nservers);
             if(strncasecmp(&json[ctoken.start], "port", 4) == 0){    
                 if((cserver->port = atoi(value)) > 65535 || cserver->port < 1){
                     perror("Invalid port number");
