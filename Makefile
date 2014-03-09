@@ -1,10 +1,8 @@
 CC=gcc
-CFLAGS=-pthread -ggdb -O -Wall -Wextra 
+CFLAGS=-pthread -ggdb -O -Wall -Wextra -lm
 all:
 	@mkdir build -p
 	@echo Building libraries
-	@make -C source/libraries/jsmn > build/build.log 2>&1
-	@cd ../../
 	@make -C source/libraries/objectivity > build/build.log 2>&1
 	@cd ../../
 	@echo Building EvilWebserver
@@ -14,7 +12,7 @@ all:
 	@$(CC) $(CFLAGS) source/base/webserver.c \
 	 source/base/evilnetlib.c \
 	  source/base/config.c \
-	   source/libraries/jsmn/libjsmn.a \
+	  source/libraries/cJSON/cJSON.c \
 	   source/libraries/objectivity/objectivity.a \
 	   -o build/evilwebserver > build/build.log 2>&1
 	@cp scripts build/ -r
