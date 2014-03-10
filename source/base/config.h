@@ -12,5 +12,4 @@ int loadConfig();
 void cleanConfig();
 int parseConfig(char * filename);
 
-
 #endif

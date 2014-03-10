@@ -11,6 +11,13 @@
 #include "evilnetlib.h"
 #include "config.h"
 
+config_server_t ** config_servers;
+config_module_t ** config_modules;
+route_node_t * config_routes;
+
+int nservers;
+int nmodules;
+
 int loadConfig(){
     int ret = 0;
     
@@ -96,9 +103,54 @@ int parseConfig(char * filename){
 
     cJSON *root = cJSON_Parse(json);
     
-    cJSON *format = cJSON_GetObjectItem(root,"format");
-    int framerate = cJSON_GetObjectItem(format,"frame rate")->valueint;
-    
+    enum config current_config = CONFIG_NONE;
+
+    cJSON *mainitem = root->child;
+    while(mainitem){
+        if(mainitem->string == NULL){
+            mainitem = mainitem->next;
+            continue;
+        } else if(strncasecmp(mainitem->string, "servers", 7) == 0){
+            current_config = CONFIG_SERVER;
+        } else if(strncasecmp(mainitem->string, "routes", 6) == 0){
+            current_config = CONFIG_ROUTE;
+        } else if(strncasecmp(mainitem->string, "modules", 7) == 0){
+            current_config = CONFIG_MODULE;
+        } else {
+            mainitem = mainitem->next;
+            continue;
+        }
+
+        cJSON *subitem = mainitem->child; 
+        while (subitem)
+        {
+            if(current_config == CONFIG_SERVER){
+                //cJSON *format = cJSON_GetObjectItem(root,"format");
+                config_servers = realloc(config_servers,
+                    (nservers + 1 * sizeof(config_server_t *)));
+                config_servers[nservers] = object_ninit(sizeof(config_server_t)); 
+
+                config_servers[nservers]->port = cJSON_GetObjectItem(subitem,"port")->valueint;                
+                config_servers[nservers]->name = strdup(cJSON_GetObjectItem(subitem,"name")->valuestring);                
+                nservers++;
+            } else if(current_config == CONFIG_ROUTE) {
+
+            } else if(current_config == CONFIG_MODULE) {
+                //set up the modules array
+                /*config_modules = realloc(config_modules,
+                    (nmodules + 1 * sizeof(config_module_t *)));
+                config_modules[nmodules] = object_ninit(sizeof(config_module_t));
+                //config_modules[nmodules]->name = strndup(&json[tokens[i - 1].start],
+                //tokens[i - 1].end - tokens[i - 1].start);
+                config_modules[nmodules]->command = NULL;
+                config_modules[nmodules]->method = NULL;
+                nmodules++;*/
+            }
+          
+            subitem = subitem->next;
+        }
+        mainitem = mainitem->next;
+    }
     cJSON_Delete(root);
     free(json);
     return 0;

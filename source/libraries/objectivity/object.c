@@ -11,7 +11,7 @@ void * object_ninit(size_t size)
             perror("Error allocating memory.");
             return NULL;
     }
-    return &new_object;
+    return new_object;
 }
 
 void * object_init(size_t size)
@@ -22,7 +22,7 @@ void * object_init(size_t size)
             return NULL;
     }
     memset(new_object, '\0', size);
-    return &new_object;
+    return new_object;
 }
 
 void * object_delete(object_t* objected)

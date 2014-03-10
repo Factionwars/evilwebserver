@@ -28,6 +28,13 @@
 long long requests = 0;
 pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+extern config_server_t ** config_servers;
+extern config_module_t ** config_modules;
+extern route_node_t * config_routes;
+
+extern int nservers;
+extern int nmodules;
+
 int main()
 {
     return server();
@@ -40,13 +47,13 @@ int server()
         perror("Closing: error reading config files.");
         return EXIT_FAILURE;
     }
-    
+   
     pthread_t * servers[nservers];
 
     //set up the servers per port
-    int i;
+    int i = 0;
     for(i=0; i < nservers; ++i){
-        printf("Creating server on port %d\n", config_servers[i]->port);
+        
         if((config_servers[i]->sockfd =
                     listenOn(config_servers[i]->port)) < 0){
             perror("Failed binding on server port");        
@@ -58,11 +65,13 @@ int server()
                 (void *)config_servers[i]);
         //Release pickachu into the wild wild west
         pthread_detach(server_thread);
+        //pthread_join(server_thread, NULL);
         servers[i] = &server_thread;
-    }
-    for(i=0; i < nservers; ++i){
-        pthread_join((*servers[i]), NULL);
 
+    }
+    sleep(100000);
+    for(i=0; i < nservers; ++i){
+        //pthread_join(*servers[0], NULL);
     } 
     return 0;
 }
@@ -70,6 +79,7 @@ int server()
 void * serverLoop(void * config_void)
 {
     config_server_t * config_server = config_void;
+
     //Create a pointer to keep the client in
     http_client_t *client_container;
     //Init the first client container
@@ -77,7 +87,7 @@ void * serverLoop(void * config_void)
 
     //Accept clients
     while((client_container->sockfd 
-        = acceptClient(config_server->port, client_container->addr))) {
+        = acceptClient(config_server->sockfd, client_container->addr))) {
         //Create a new thread to assign to the new client
         pthread_t client_thread;
         pthread_create( &client_thread,
@@ -89,7 +99,7 @@ void * serverLoop(void * config_void)
         //Create a new client container  for the next newcomer
         client_container = initClientContainer();
     }
-
+    
     close(config_server->port);
     return 0;
 

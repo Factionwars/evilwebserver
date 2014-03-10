@@ -31,7 +31,7 @@ http_client_t * initClientContainer()
 {
     http_client_t *client_container;
     client_container = object_init(sizeof(http_client_t));
-    client_container->addr = object_ninit(sizeof(struct sockaddr_in));
+    client_container->addr = object_init(sizeof(struct sockaddr_in));
     client_container->sockfd = 0;
     return client_container;
 }
@@ -133,6 +133,7 @@ int listenOn(int port)
     host_addr.sin_family = AF_INET;
     host_addr.sin_port = htons(port);
     host_addr.sin_addr.s_addr = INADDR_ANY;
+
     //Fill the struct padding with zero's
     memset(&(host_addr.sin_zero), '\0', 8);
 
@@ -332,18 +333,17 @@ int getLine(int sockfd, char *buffer)
         line_pos = 0;
         line_end = memchr(&line_buffer[line_pos], '\n', max - line_pos);
 
-        if(line_end == NULL){
+        if(line_end == NULL || line_end > 100){
             //Howdoe!
             buffered = 0;
             line_pos = 0;
             strncpy(buffer + buffer_pos, &line_buffer[0], max - buffer_pos);
-            
         }
 
     } 
 
     int line_length = line_end - &line_buffer[line_pos];
-    strncpy(&buffer[buffer_pos], &line_buffer[line_pos], line_length  );
+    strncpy(&buffer[buffer_pos], &line_buffer[line_pos], line_length);
     buffered -= line_length;
 
     line_pos += line_length + 1;
