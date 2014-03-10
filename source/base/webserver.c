@@ -63,13 +63,10 @@ int server()
                 NULL,
                 &serverLoop,
                 (void *)config_servers[i]);
-        //Release pickachu into the wild wild west
-        //pthread_detach(server_thread);
-        //pthread_join(server_thread, NULL);
         servers[i] = &server_thread;
 
     }
-    //sleep(100000);
+
     for(i=0; i < nservers; ++i){
         pthread_join(*servers[0], NULL);
     } 
@@ -238,10 +235,12 @@ void *handleClient(void *client_void)
             int received = 0;            
             http_request->content_body = malloc(sizeof(char) * http_request->content_length);
             while(received < http_request->content_length){
+                //TODO: First flush getLine's Buffer then recv remaining bits and bytes
                 received += recv(client->sockfd,
                     (http_request->content_body + received),
                     (http_request->content_length - received),
                     0);
+                   // getLine(client->sockfd, http_request->content_body);
 
             }
         }

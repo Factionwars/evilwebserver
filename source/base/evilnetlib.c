@@ -31,14 +31,14 @@ http_client_t * initClientContainer()
 {
     http_client_t *client_container;
     client_container = object_init(sizeof(http_client_t));
-    client_container->addr = object_init(sizeof(struct sockaddr_in));
+    client_container->addr = object_ninit(sizeof(struct sockaddr_in));
     client_container->sockfd = 0;
     return client_container;
 }
 
 /**
  * @brief Cleans up a client container and a http_request container
- * @return New http_client_t container pointer
+ * @return void
  */
 void cleanUpClient(http_client_t * client, http_request_t * http_request)
 {
@@ -261,14 +261,8 @@ int sendFile(int sockfd, char *file_name)
 
 }
 
-void initCGI()
-{
- 
-}
-
 char ** addEnv(char ** envp, char * name, char * value, int * length)
 {
-    //TODO: understand why the +2 instead of +1 makes it work
     envp = realloc(envp,  sizeof(char *) * (*length + 2));
     if (envp == NULL) {
         perror("realloc");
@@ -309,18 +303,21 @@ int sendPython(int sockfd, http_request_t* http_request)
  * @param max_size max line size, do not exceed buffer size
  * @return line length or negative on failure
  */
+
+static char __thread line_buffer[MAX_HEADER_LENGTH] = {0};
+static int __thread  buffered = 0;
+static int __thread  line_pos = 0;
+const int max = MAX_HEADER_LENGTH;
+
 int getLine(int sockfd, char *buffer) 
 {
-    static char __thread line_buffer[MAX_HEADER_LENGTH] = {0};
-    static int __thread  buffered = 0;
-    static int __thread  line_pos = 0;
-    const int max = MAX_HEADER_LENGTH;
+
 
     int buffer_pos = 0;
     char * line_end;
     line_end = memchr(&line_buffer[line_pos], '\n', max - line_pos);
     if(line_end == NULL){
-        if(buffered > 0){   
+        if(buffered > 0){  
             strncpy(buffer + buffer_pos, &line_buffer[line_pos], buffered);
             buffer_pos += buffered;
             buffered = 0;        
@@ -407,6 +404,7 @@ char * readFile(char * filename)
     if(read(file, ptr, length) == -1){
         return NULL;
     }
+    close(file);
     return ptr;
 }
 

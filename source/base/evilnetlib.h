@@ -46,7 +46,12 @@ typedef struct {
     http_client_t * client;
 } http_request_t;
 
+
+
+
+
 http_client_t * initClientContainer();
+
 void cleanUpClient(http_client_t * client, http_request_t * http_request);
 void initCGI();
 

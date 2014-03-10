@@ -45,7 +45,7 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
 
     char *argv[] = { command , script , 0 }; /* Arg value array */
     //Close environment list
-    envp = realloc(envp, (envp_length) * sizeof(envp[0]));
+    envp = realloc(envp, (++envp_length) * sizeof(envp[0]));
     envp[envp_length - 1] = 0;
 
     pid_t pid;
@@ -77,6 +77,7 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
                 bptr += written;
             }
         }
+
         //Read the CGI output from the pipe and send it to the client
         int received = 0;
         while ((received = read(pipes[0], buffer, 1023))) {
@@ -99,6 +100,7 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
         return ret;
 
     } else {
+
         close(pipes[0]);
         close(pipes[3]);
         //Duplicate our pipes against STDIN/STDOUT
