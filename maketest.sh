@@ -1,1 +1,1 @@
-make && valgrind --track-origins=yes build/evilwebserver
+make && valgrind --track-origins=yes --leak-check=yes build/evilwebserver

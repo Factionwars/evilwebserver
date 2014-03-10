@@ -46,7 +46,7 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
     char *argv[] = { command , script , 0 }; /* Arg value array */
     //Close environment list
     envp = realloc(envp, (envp_length) * sizeof(envp[0]));
-    envp[envp_length] = 0;
+    envp[envp_length - 1] = 0;
 
     pid_t pid;
     int pipes[4];

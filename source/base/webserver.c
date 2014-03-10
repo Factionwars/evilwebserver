@@ -64,14 +64,14 @@ int server()
                 &serverLoop,
                 (void *)config_servers[i]);
         //Release pickachu into the wild wild west
-        pthread_detach(server_thread);
+        //pthread_detach(server_thread);
         //pthread_join(server_thread, NULL);
         servers[i] = &server_thread;
 
     }
-    sleep(100000);
+    //sleep(100000);
     for(i=0; i < nservers; ++i){
-        //pthread_join(*servers[0], NULL);
+        pthread_join(*servers[0], NULL);
     } 
     return 0;
 }
@@ -99,7 +99,7 @@ void * serverLoop(void * config_void)
         //Create a new client container  for the next newcomer
         client_container = initClientContainer();
     }
-    
+
     close(config_server->port);
     return 0;
 

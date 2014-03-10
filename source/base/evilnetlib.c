@@ -197,7 +197,7 @@ int sendHeader(int sockfd, char *message, char *value)
 {
     unsigned int header_length = strlen(message) + strlen(value);
 
-    char * header = malloc(header_length + 4);
+    char * header = malloc(header_length + 5);
     //Render header
     sprintf(header,"%s: %s\r\n", message, value);
     //Send and free the header ptr
