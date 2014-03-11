@@ -46,10 +46,6 @@ typedef struct {
     http_client_t * client;
 } http_request_t;
 
-
-
-
-
 http_client_t * initClientContainer();
 
 void cleanUpClient(http_client_t * client, http_request_t * http_request);
@@ -61,6 +57,7 @@ int acceptClient(int sockfd, struct sockaddr_in* client_addr);
 int sendString(int sockfd, char *buffer);
 int sendHeader(int sockfd, char *message, char *value);
 int sendFile(int sockfd, char *file_name);
+int flushBuffer(char *buffer, int max_buffer);
 int getLine(int sockfd, char *buffer);
 
 char ** addEnv(char ** envp, char * name, char * value, int * length);

@@ -328,13 +328,15 @@ int getLine(int sockfd, char *buffer)
         }
         //error checking on recv
         line_pos = 0;
-        line_end = memchr(&line_buffer[line_pos], '\n', max - line_pos);
+        line_end = memchr(&line_buffer[line_pos], '\n', max);
 
-        if(line_end == NULL || line_end > 100){
+        if(line_end == NULL || line_end > (line_buffer + max) ){
             //Howdoe!
             buffered = 0;
             line_pos = 0;
             strncpy(buffer + buffer_pos, &line_buffer[0], max - buffer_pos);
+            printf("fuck %d\n", max - line_pos);
+            return 0;
         }
 
     } 
@@ -363,19 +365,6 @@ int flushBuffer(char *buffer, int max_buffer)
     line_pos = 0;
     buffered = 0;
     return copied;
-}
-
-int oldRecv(int sockfd, char *buffer, int max_size) {
-    //Build a buffer system from wich the lines are extracted
-    char *ptr = buffer;
-    while(recv(sockfd, ptr, 1, 0) == 1 && (ptr - buffer) <= (max_size / 2) ){
-        if(*ptr == '\n'){ 
-            break;
-        }
-        ptr++;
-    }
-    *(ptr) = '\0';
-    return strlen(buffer);
 }
 
 /**

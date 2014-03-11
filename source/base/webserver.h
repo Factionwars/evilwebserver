@@ -1,6 +1,6 @@
 #ifndef SERVER_HEADER
 #define SERVER_HEADER
-#define DEBUG true
+//#define DEBUG true
 /* Basic webserver configuration */
 
 #define DIR_CONFIG "config/"

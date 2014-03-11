@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <sys/wait.h>
 
 #include <netdb.h>
  
@@ -48,17 +48,18 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
     envp = realloc(envp, (++envp_length) * sizeof(envp[0]));
     envp[envp_length - 1] = 0;
 
-    pid_t pid;
     int pipes[4];
 
     if(pipe(&pipes[0]) < 0)/* Parent read/child write pipe */
         return -1;
     if(pipe(&pipes[2]) < 0) /* Child read/parent write pipe */
         return -1;
+    pid_t pid1;
+    pid_t pid2;
+    int status;
 
-    if ((pid = fork()) > 0) {
-
-        //we won't use the childs end
+    if ((pid1 = fork())) {
+         //we won't use the childs end
         close(pipes[1]);
         close(pipes[2]);
 
@@ -87,6 +88,7 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
                 break;
             }
         }
+
         close(pipes[0]);
         close(pipes[3]);
         
@@ -96,23 +98,26 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
         }
                              
         free(envp);
-
+       
+        waitpid(pid1, &status, NULL);
         return ret;
+    } else if(!pid1) {
+        if(pid2 = fork()) {
+            exit(0);
+        } else if(!pid2) {
+            close(pipes[0]);
+            close(pipes[3]);
+            //Duplicate our pipes against STDIN/STDOUT
+            dup2(pipes[1], fileno(stdout));
+            dup2(pipes[2], fileno(stdin));
+            //If enabled also pipe against STDERR
+            if(CGI_ERRORS)
+                dup2(pipes[1], fileno(stderr));
 
-    } else {
-
-        close(pipes[0]);
-        close(pipes[3]);
-        //Duplicate our pipes against STDIN/STDOUT
-        dup2(pipes[1], fileno(stdout));
-        dup2(pipes[2], fileno(stdin));
-        //If enabled also pipe against STDERR
-        if(CGI_ERRORS)
-            dup2(pipes[1], fileno(stderr));
-
-        execve(command, &argv[0], envp);     
-        printf("Failed to launch CGI application\n");
-        exit(0);
+            execve(command, &argv[0], envp);     
+            printf("Failed to launch CGI application\n");
+            exit(0);
+        }
     }
 
     return -1;
