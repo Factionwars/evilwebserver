@@ -9,7 +9,7 @@ TARGET=build/evilwebserver
 SO_TARGET=$(patsubst %.s,%,$(TARGET))
 
 all: $(TARGET) $(SO_TARGET)
-
+	@echo "Happy serving -- Factionwars@evilzone.org"
 $(TARGET): build objectivity $(OBJECTS)
 
 $(SO_TARGET): $(TARGET) $(OBJECTS)
