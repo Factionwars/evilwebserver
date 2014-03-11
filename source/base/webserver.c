@@ -97,7 +97,7 @@ void * serverLoop(void * config_void)
         client_container = initClientContainer();
     }
 
-    close(config_server->port);
+    close(config_server->sockfd);
     return 0;
 
 }

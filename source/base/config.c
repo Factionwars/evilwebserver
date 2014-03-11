@@ -6,7 +6,7 @@
 #include <string.h>
  //JSON parser library
 #include "../libraries/cJSON/cJSON.h"
-#include "../libraries/objectivity/object.h"
+#include "object.h"
 #include "webserver.h"
 #include "evilnetlib.h"
 #include "config.h"
