@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-pthread -ggdb -O -Wall -Wextra -lm
+CFLAGS=-pthread -ggdb -O -Wall -Wextra -lm -std=c1x -D_GNU_SOURCE
 all:
 	@mkdir build -p
 	@echo Building libraries

@@ -99,10 +99,10 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
                              
         free(envp);
        
-        waitpid(pid1, &status, NULL);
+        waitpid(pid1, &status, 0);
         return ret;
     } else if(!pid1) {
-        if(pid2 = fork()) {
+        if((pid2 = fork())) {
             exit(0);
         } else if(!pid2) {
             close(pipes[0]);
