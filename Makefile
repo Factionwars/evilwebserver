@@ -21,3 +21,6 @@ build:
 	@mkdir -p build
 objectivity:
 	$(MAKE) -C source/libraries/objectivity/
+test:
+	$(MAKE)
+	valgrind --track-origins=yes --leak-check=full --track-fds=yes build/evilwebserver
