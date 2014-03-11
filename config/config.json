@@ -1,7 +1,7 @@
 {
 	"servers" : {
 		"server12" : {
-			"port" : 1237,
+			"port" : 1337,
 			"name" : "EvilTinyHTTPD"
 		}
 	},
