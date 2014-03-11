@@ -1,24 +1,23 @@
 CC=gcc
-CFLAGS=-pthread -ggdb -O -Wall -Wextra -lm -std=c1x -D_GNU_SOURCE
-all:
-	@mkdir build -p
-	@echo Building libraries
-	@make -C source/libraries/objectivity > build/build.log 2>&1
-	@cd ../../
-	@echo Building EvilWebserver
-	@mkdir source/base/headers -p
-	@cp source/libraries/objectivity/*.h source/base/headers/
+CFLAGS=-pthread -ggdb -O -Wall -Wextra -lm -std=c11 -D_GNU_SOURCE  -I./source/libraries/objectivity/.  $(OPTFLAGS)
+libs=ldl $(OPTLIBS)
 
-	@$(CC) $(CFLAGS) source/base/webserver.c \
-	 source/base/evilnetlib.c \
-	  source/base/config.c \
-	  source/libraries/cJSON/cJSON.c \
-	   source/libraries/objectivity/objectivity.a \
-	   -o build/evilwebserver > build/build.log 2>&1
-	@cp scripts build/ -r
-	@cp config build/ -r
-	@echo Done! Output written to build/build.log
+SOURCES=$(wildcard source/**/*.c source/*.c source/libraries/cJSON/*.c)
+OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
+
+TARGET=build/evilwebserver 
+SO_TARGET=$(patsubst %.s,%,$(TARGET))
+
+all: $(TARGET) $(SO_TARGET)
+
+$(TARGET): build objectivity $(OBJECTS)
+
+$(SO_TARGET): $(TARGET) $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(wildcard source/libraries/**/*.a)
 clean:
-	@echo Removing build folder
-	@rm -rf build
-	@echo Done cleaning up!
+	rm -rf build $(OBJECTS)
+	$(MAKE) clean -C source/libraries/objectivity/
+build:
+	@mkdir -p build
+objectivity:
+	$(MAKE) -C source/libraries/objectivity/

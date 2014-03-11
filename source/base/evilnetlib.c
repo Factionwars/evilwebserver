@@ -13,8 +13,7 @@
 #include "evilnetlib.h"
 
 //Cgi function
-#include "cgi.c"
-#include "headers/object.h"
+#include "object.h"
 
 /** 
  *  @file   evilnetlib.c
