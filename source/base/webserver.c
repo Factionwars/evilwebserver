@@ -233,16 +233,15 @@ void *handleClient(void *client_void)
     if(http_request->request_type == 2){
         if(http_request->content_length < MAX_HEADER_LENGTH){
             int received = 0;            
-            http_request->content_body = malloc(sizeof(char) * http_request->content_length);
+            http_request->content_body = malloc(sizeof(char) * (http_request->content_length + 1));
+            received += flushBuffer(http_request->content_body, http_request->content_length);
             while(received < http_request->content_length){
-                //TODO: First flush getLine's Buffer then recv remaining bits and bytes
                 received += recv(client->sockfd,
                     (http_request->content_body + received),
                     (http_request->content_length - received),
                     0);
-                   // getLine(client->sockfd, http_request->content_body);
-
             }
+            http_request->content_body[received] = '\0';
         }
     }
 

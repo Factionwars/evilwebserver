@@ -305,8 +305,8 @@ int sendPython(int sockfd, http_request_t* http_request)
  */
 
 static char __thread line_buffer[MAX_HEADER_LENGTH] = {0};
-static int __thread  buffered = 0;
-static int __thread  line_pos = 0;
+static unsigned int __thread  buffered = 0;
+static unsigned int __thread  line_pos = 0;
 const int max = MAX_HEADER_LENGTH;
 
 int getLine(int sockfd, char *buffer) 
@@ -348,6 +348,21 @@ int getLine(int sockfd, char *buffer)
 
     return strlen(buffer);
 
+}
+
+int flushBuffer(char *buffer, int max_buffer)
+{
+    //Copy remaining bytes from buffer
+    buffered = strlen(&line_buffer[line_pos]);
+    if(buffered > max_buffer)
+        buffered = max_buffer;
+    strncpy(buffer, &line_buffer[line_pos], buffered) ;
+    buffer[buffered] = '\0';
+    int copied = buffered;
+    //Set buffer stats to zero
+    line_pos = 0;
+    buffered = 0;
+    return copied;
 }
 
 int oldRecv(int sockfd, char *buffer, int max_size) {
