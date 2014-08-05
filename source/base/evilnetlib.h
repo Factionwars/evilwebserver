@@ -25,6 +25,7 @@
 
 typedef struct { 
     int sockfd;
+    int num_server;
     struct sockaddr_in * addr;
     char http_version[4];
 } http_client_t;

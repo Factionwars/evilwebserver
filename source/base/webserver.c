@@ -86,6 +86,7 @@ void * serverLoop(void * config_void)
     while((client_container->sockfd 
         = acceptClient(config_server->sockfd, client_container->addr))) {
         //Create a new thread to assign to the new client
+        client_container->num_server = config_server->num_server;
         pthread_t client_thread;
         pthread_create( &client_thread,
                 NULL,
@@ -118,7 +119,7 @@ void *handleClient(void *client_void)
     http_request_t *http_request;
 
     //Init Request struct
-    if( ( http_request = malloc(sizeof(http_request_t))) == NULL)
+    if( ( http_request = object_ninit(sizeof(http_request_t))) == NULL)
         logError(3, client, http_request);
     //Initialize pointers to NULL
     // so we know if we can free them or not
@@ -269,7 +270,7 @@ void *handleClient(void *client_void)
     {        
         if(http_request->request_uri != NULL) {
             sendString(client->sockfd, "HTTP/1.1 200 OK\r\n");
-            sendHeader(client->sockfd, "Server", SERVER_NAME);
+            sendHeader(client->sockfd, "Server", config_servers[client->num_server-1]->name);
             sendHeader(client->sockfd, "Date", buf);            
             //Here you can choose which method to respond with
             //TODO: Implement a routing system
@@ -278,7 +279,7 @@ void *handleClient(void *client_void)
             //sendPython(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");
-            sendHeader(client->sockfd, "Server", SERVER_NAME);
+            sendHeader(client->sockfd, "Server", config_servers[client->num_server-1]->name);
             sendHeader(client->sockfd, "Date", buf);
 
             sendFile(client->sockfd, "html/404.html");

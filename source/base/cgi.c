@@ -9,6 +9,10 @@
 #include <netdb.h>
  
 #include "evilnetlib.h"
+#include "webserver.h"
+#include "config.h"
+
+extern config_server_t ** config_servers;
 
 int sendCGI(int sockfd, http_request_t* http_request, char * command, char * script) 
 {
@@ -16,7 +20,10 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
     char ** envp = NULL;
 
     int envp_length = 0;
- 
+    
+    //Extract the server configuration
+    config_server_t * config_server = config_servers[http_request->client->num_server-1];
+
     envp = addEnv(envp, "REDIRECT_STATUS", "200", &envp_length);
 
     if(http_request->request_type == 1){
@@ -40,9 +47,13 @@ int sendCGI(int sockfd, http_request_t* http_request, char * command, char * scr
     envp = addEnv(envp, "HTTP_ACCEPT", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\0", &envp_length);
     envp = addEnv(envp, "CONTENT_TYPE", "application/x-www-form-urlencoded\0", &envp_length);
     envp = addEnv(envp, "GATEWAY_INTERFACE","CGI/1.1\0", &envp_length);
-    envp = addEnv(envp, "SERVER_NAME", SERVER_NAME, &envp_length);
+    envp = addEnv(envp, "SERVER_NAME", config_server->name, &envp_length);
     envp = addEnv(envp, "SERVER_PROTOCOL", "HTTP/1.1\0", &envp_length);
-    envp = addEnv(envp, "SERVER_PORT", SERVER_PORT_CGI, &envp_length);
+
+    char port[5];
+    sprintf(port, "%d", config_server->port);
+
+    envp = addEnv(envp, "SERVER_PORT", port, &envp_length);
     envp = addEnv(envp, "SERVER_SOFTWARE", SERVER_SOFTWARE, &envp_length);
 
     char *argv[] = { command , script , 0 }; /* Arg value array */

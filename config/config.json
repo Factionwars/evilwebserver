@@ -3,7 +3,11 @@
 		"server12" : {
 			"port" : 1337,
 			"name" : "EvilTinyHTTPD"
-		}
+		},
+        "server13" : {
+            "port" : 1338,
+            "name" : "Rogue server"
+        }
 	},
 	"modules" : {
 		"php" : {

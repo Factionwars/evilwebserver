@@ -1,13 +1,13 @@
 #ifndef SERVER_HEADER
 #define SERVER_HEADER
 #define DEBUG true
-/* Basic webserver configuration */
 
 #define DIR_CONFIG "config/"
 
-/* File defines*/
+// Config struct defines
 typedef struct {
-        int sockfd;
+    int sockfd;
+    int num_server;
 	int port;
 	char * name;
 	char * hostname;

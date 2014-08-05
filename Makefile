@@ -14,11 +14,14 @@ $(TARGET): build objectivity $(OBJECTS)
 
 $(SO_TARGET): $(TARGET) $(OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $(OBJECTS) $(wildcard source/libraries/**/*.a)
+
 clean:
 	rm -rf build $(OBJECTS)
 	$(MAKE) clean -C source/libraries/objectivity/
 build:
 	@mkdir -p build
+	@cp scripts build/ -r
+	@cp config build/ -r
 objectivity:
 	$(MAKE) -C source/libraries/objectivity/
 test:

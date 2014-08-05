@@ -4,6 +4,11 @@
 
 #include "object.h"
 
+void * object(size_t size)
+{
+    return object_init(size);
+}
+
 void * object_ninit(size_t size)
 {
     object_t* new_object = malloc(size);

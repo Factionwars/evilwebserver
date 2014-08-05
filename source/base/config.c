@@ -131,20 +131,27 @@ int parseConfig(char * filename){
                 config_servers[nservers] = object_ninit(sizeof(config_server_t)); 
 
                 config_servers[nservers]->port = cJSON_GetObjectItem(subitem,"port")->valueint;                
+                if(config_servers[nservers]->port < 1
+                        || config_servers[nservers]->port > 65535){
+                    perror("Invalid port given in server configuration");
+                    return -1;
+                }
+
                 config_servers[nservers]->name = strdup(cJSON_GetObjectItem(subitem,"name")->valuestring);                
+                config_servers[nservers]->num_server = nservers + 1;
                 nservers++;
             } else if(current_config == CONFIG_ROUTE) {
 
             } else if(current_config == CONFIG_MODULE) {
                 //set up the modules array
-                /*config_modules = realloc(config_modules,
+                config_modules = realloc(config_modules,
                     (nmodules + 1 * sizeof(config_module_t *)));
                 config_modules[nmodules] = object_ninit(sizeof(config_module_t));
                 //config_modules[nmodules]->name = strndup(&json[tokens[i - 1].start],
                 //tokens[i - 1].end - tokens[i - 1].start);
                 config_modules[nmodules]->command = NULL;
                 config_modules[nmodules]->method = NULL;
-                nmodules++;*/
+                nmodules++;
             }
           
             subitem = subitem->next;
