@@ -104,6 +104,10 @@ int parseConfig(char * filename){
     cJSON *root = cJSON_Parse(json);
     
     enum config current_config = CONFIG_NONE;
+    if(root == NULL){
+        perror("Error parsing config file");
+        return -1;
+    }
 
     cJSON *mainitem = root->child;
     while(mainitem){
@@ -130,14 +134,17 @@ int parseConfig(char * filename){
                     (nservers + 1 * sizeof(config_server_t *)));
                 config_servers[nservers] = object_ninit(sizeof(config_server_t)); 
 
-                config_servers[nservers]->port = cJSON_GetObjectItem(subitem,"port")->valueint;                
+                config_servers[nservers]->port = 
+                    cJSON_GetObjectItem(subitem,"port")->valueint;                
+
                 if(config_servers[nservers]->port < 1
                         || config_servers[nservers]->port > 65535){
                     perror("Invalid port given in server configuration");
                     return -1;
                 }
 
-                config_servers[nservers]->name = strdup(cJSON_GetObjectItem(subitem,"name")->valuestring);                
+                config_servers[nservers]->name = strdup(subitem->string);                
+
                 config_servers[nservers]->num_server = nservers + 1;
                 nservers++;
             } else if(current_config == CONFIG_ROUTE) {

@@ -1,22 +1,20 @@
 {
 	"servers" : {
-		"server12" : {
-			"port" : 1337,
-			"name" : "EvilTinyHTTPD"
+		"EvilTinyHTTPD" : {
+			"port" : 1337
 		},
-        "server13" : {
-            "port" : 1338,
-            "name" : "Rogue server"
+        "Rogue Server" : {
+            "port" : 1338
         }
 	},
 	"modules" : {
 		"php" : {
-			"command" : "/usr/bin/php-cgi",
-			"method" : "CGI"
+			"command"   : "/usr/bin/php-cgi",
+			"method"    : "CGI"
 		},
 		"python" : {
-			"command" : "/usr/bin/python2",
-			"method" : "CGI"
+			"command"   : "/usr/bin/python2",
+			"method"    : "CGI"
 		}
 	},
 	"security" : {

@@ -274,8 +274,8 @@ void *handleClient(void *client_void)
             sendHeader(client->sockfd, "Date", buf);            
             //Here you can choose which method to respond with
             //TODO: Implement a routing system
-            //sendFile(client->sockfd, "scripts/index.html");
-            sendPHP(client->sockfd, http_request);
+            sendFile(client->sockfd, "scripts/index.html");
+            //sendPHP(client->sockfd, http_request);
             //sendPython(client->sockfd, http_request);
         } else {
             sendString(client->sockfd, "HTTP/1.1 404\r\n");

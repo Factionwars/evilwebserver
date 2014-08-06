@@ -222,6 +222,7 @@ int sendFile(int sockfd, char *file_name)
     char * ptr;
     //Backup pointer to ptr
     char * bPtr;
+
     //Open file and get the filesize
     if((file = open(file_name, O_RDONLY, 0)) == -1)
         return -1;
@@ -233,7 +234,14 @@ int sendFile(int sockfd, char *file_name)
     snprintf(length_header, header_length ,"Content-Length: %d\r\n", length);
     sendString(sockfd, length_header);
     //TODO: Different file support
-    sendString(sockfd, "Content-Type: text/html; charset=UTF-8\r\n");
+    char filetype_format[] = "Content-Type: %s; charset=UTF-8\r\n";
+    char filetype[] = "text/html";
+    char * filetype_header =
+        object_ninit((strlen(filetype_format) + strlen(filetype) - 1) * sizeof(char));
+    sprintf(filetype_header, filetype_format, filetype);
+
+    sendString(sockfd, filetype_header);
+    free(filetype_header);
 
     sendString(sockfd, "\r\n");
 
